@@ -1,2 +1,18 @@
+[project]
+name = "wxpi"
+version = "0.1.0"
+description = "Native accessible wxPython frontend for the Pi coding agent"
+requires-python = ">=3.11"
+dependencies = [
+    "wxPython>=4.2.0",
+]
+
+[project.scripts]
+wxpi = "wxpi.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

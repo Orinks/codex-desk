@@ -5,6 +5,8 @@ PI_BINARY_ARGS is a module-level list so tests can monkeypatch it to point at
 fake_pi.py without modifying any class state.
 """
 import json
+import subprocess
+import sys
 import threading
 from typing import Callable, Optional
 
@@ -30,18 +32,23 @@ class PiBridge:
     def start(self, cwd: str, session_path: Optional[str] = None,
               continue_session: bool = False) -> None:
         """Spawn Pi and start the background reader thread."""
-        import subprocess
         args = list(PI_BINARY_ARGS)
         if session_path:
             args += ["--session", session_path]
         if continue_session:
             args += ["--continue"]
+        
+        # On Windows, use shell=True to avoid the console window taking over.
+        # This is the same approach used in first_run_panel.py for pi /login.
+        use_shell = sys.platform == "win32"
+        
         self._proc = subprocess.Popen(
             args,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd,
+            shell=use_shell,
         )
         self._thread = threading.Thread(
             target=self._read_loop, daemon=True, name="pi-reader"
@@ -64,6 +71,17 @@ class PiBridge:
     def on_process_exit(self, callback: Callable[[], None]) -> None:
         """Register a callback invoked once when the Pi process exits."""
         self._exit_callbacks.append(callback)
+
+    def stop(self) -> None:
+        """Stop the Pi process and the reader thread."""
+        if self._proc:
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                self._proc.kill()
+            self._proc = None
+        self._thread = None
 
     # ------------------------------------------------------------------
     # Internal helpers
