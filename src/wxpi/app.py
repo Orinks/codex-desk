@@ -1,6 +1,5 @@
 """wxPi application entry point."""
 import shutil
-import subprocess
 import sys
 
 import wx
@@ -8,33 +7,12 @@ import wx
 from wxpi.constants import APP_NAME, PI_BINARY
 from wxpi.first_run_panel import FirstRunFrame
 from wxpi.main_frame import MainFrame
+from wxpi.auth_service import AuthService
 
 
 def check_pi_configured() -> bool:
-    """Check if Pi has a provider configured.
-    
-    Returns True if Pi has at least one provider configured,
-    False otherwise. Uses the same approach as provider_panel.py to check
-    for OAuth tokens in auth.json.
-    """
-    if not shutil.which(PI_BINARY):
-        return False
-    
-    # Check for OAuth tokens in auth.json (same as provider_panel.py)
-    import json
-    import os
-    auth_path = os.path.expanduser("~/.pi/agent/auth.json")
-    if os.path.exists(auth_path):
-        try:
-            with open(auth_path, 'r') as f:
-                auth_data = json.load(f)
-                # Check if there are any tokens
-                if auth_data.get("tokens"):
-                    return True
-        except (json.JSONDecodeError, IOError):
-            pass
-    
-    return False
+    """Check if Pi has usable auth configured."""
+    return AuthService().is_configured()
 
 
 class WxPiApp(wx.App):

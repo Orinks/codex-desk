@@ -5,7 +5,7 @@ Written FIRST (TDD) — implementation in wxpi/rpc_events.py must make these gre
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from wxpi.rpc_events import (
     parse_event,

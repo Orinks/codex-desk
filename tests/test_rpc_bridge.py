@@ -9,7 +9,7 @@ import sys
 import threading
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from wxpi.rpc_bridge import PiBridge
 
