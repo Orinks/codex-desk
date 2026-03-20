@@ -2,20 +2,21 @@
 Tests for PiBridge.
 Written FIRST (TDD) — implementation in wxpi/rpc_bridge.py must make these green.
 
-fake_pi.py is used as a deterministic subprocess stand-in (no live Pi required).
+fake_pi.py and its variants are deterministic subprocess stand-ins (no live Pi required).
 """
-import sys
 import os
-import time
+import sys
 import threading
-
-import pytest
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from wxpi.rpc_bridge import PiBridge
 
 FAKE_PI = [sys.executable, os.path.join(os.path.dirname(__file__), "fake_pi.py")]
+FAKE_PI_ABORT = [sys.executable, os.path.join(os.path.dirname(__file__), "fake_pi_abort.py")]
+FAKE_PI_CONFIRM = [sys.executable, os.path.join(os.path.dirname(__file__), "fake_pi_confirm.py")]
+FAKE_PI_UNICODE = [sys.executable, os.path.join(os.path.dirname(__file__), "fake_pi_unicode.py")]
 
 
 def test_happy_path(monkeypatch):
@@ -82,6 +83,64 @@ def test_no_events_before_prompt(monkeypatch):
     monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
     bridge.on_event(events.append)
     bridge.start(cwd="/tmp")
-    # Do NOT send a prompt — fake_pi blocks waiting for one
     time.sleep(0.15)
     assert events == [], f"Expected no events before prompt, got: {events}"
+
+
+def test_send_abort_round_trip(monkeypatch):
+    """send_abort writes an abort message that the backend can react to."""
+    events = []
+    exit_called = threading.Event()
+    bridge = PiBridge()
+    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_ABORT)
+    bridge.on_event(events.append)
+    bridge.on_process_exit(lambda: exit_called.set())
+    bridge.start(cwd="/tmp")
+    bridge.send_prompt("hello")
+    time.sleep(0.1)
+    bridge.send_abort()
+
+    assert exit_called.wait(timeout=3.0), "abort path never exited"
+    assert events[-1] == {"type": "agent_end", "status": "aborted"}
+
+
+def test_confirm_round_trip(monkeypatch):
+    """Bridge can send a confirm_response back to the backend."""
+    events = []
+    exit_called = threading.Event()
+    bridge = PiBridge()
+    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_CONFIRM)
+    bridge.on_event(events.append)
+    bridge.on_process_exit(lambda: exit_called.set())
+    bridge.start(cwd="/tmp")
+    bridge.send_prompt("hello")
+
+    deadline = time.time() + 2.0
+    while time.time() < deadline:
+        confirm_events = [e for e in events if e.get("type") == "confirm"]
+        if confirm_events:
+            break
+        time.sleep(0.02)
+    else:
+        raise AssertionError("confirm event never arrived")
+
+    bridge.send_ui_response("req-1", True)
+    assert exit_called.wait(timeout=3.0), "confirm path never exited"
+    deltas = [e["delta"] for e in events if e.get("type") == "message_update"]
+    assert deltas == ["confirmed:True"]
+
+
+def test_unicode_separators_survive_jsonl_round_trip(monkeypatch):
+    """U+2028/U+2029 inside JSON strings must survive the bridge unchanged."""
+    events = []
+    exit_called = threading.Event()
+    bridge = PiBridge()
+    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_UNICODE)
+    bridge.on_event(events.append)
+    bridge.on_process_exit(lambda: exit_called.set())
+    bridge.start(cwd="/tmp")
+    bridge.send_prompt("hello")
+    assert exit_called.wait(timeout=3.0), "unicode fixture never exited"
+
+    deltas = [e["delta"] for e in events if e.get("type") == "message_update"]
+    assert deltas == ["line1\u2028line2\u2029line3"]
