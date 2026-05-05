@@ -148,6 +148,20 @@ class MainFrame(wx.Frame):
         font = wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, faceName="Courier New")
         self._transcript.SetFont(font)
 
+        turn_status_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        turn_status_label = wx.StaticText(main_panel, label="Turn status:")
+        self._turn_status_text = wx.StaticText(main_panel, label=self._turn_status)
+        self._working_gauge = wx.Gauge(main_panel, range=100, size=(160, -1))
+        self._working_gauge.SetValue(0)
+        turn_status_sizer.Add(turn_status_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
+        turn_status_sizer.Add(
+            self._turn_status_text,
+            proportion=1,
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+            border=8,
+        )
+        turn_status_sizer.Add(self._working_gauge, flag=wx.ALIGN_CENTER_VERTICAL)
+
         prompt_label = wx.StaticText(main_panel, label="Prompt:")
         self._input = wx.TextCtrl(
             main_panel,
@@ -164,6 +178,7 @@ class MainFrame(wx.Frame):
         sizer.Add(session_sizer, flag=wx.EXPAND | wx.ALL, border=4)
         sizer.Add(transcript_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(self._transcript, proportion=8, flag=wx.EXPAND)
+        sizer.Add(turn_status_sizer, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(prompt_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(self._input, proportion=2, flag=wx.EXPAND | wx.ALL, border=4)
 
@@ -182,6 +197,8 @@ class MainFrame(wx.Frame):
         self.SetStatusText(self._cwd, 0)  # Working directory
         self.SetStatusText(self._model or "No model", 1)  # Model name
         self.SetStatusText(self._turn_status, 2)  # Turn status
+        if hasattr(self, "_turn_status_text"):
+            self._turn_status_text.SetLabel(self._turn_status)
 
     def _update_title(self) -> None:
         """Update window title with working directory."""
@@ -222,7 +239,7 @@ class MainFrame(wx.Frame):
             return
         if not self._session_controller.has_active_session():
             if self._pending_prompt:
-                self.append_transcript("\n[Still starting Codex. Try again after the current prompt begins.]\n")
+                self.set_turn_status("Still starting Codex")
                 return
         self._input.Clear()
         self.start_working_status()
@@ -427,6 +444,7 @@ class MainFrame(wx.Frame):
         self._working_started_at = None
         if self._working_timer.IsRunning():
             self._working_timer.Stop()
+        self._working_gauge.SetValue(0)
         self.set_turn_status(status)
 
     def _ensure_working_timer(self) -> None:
@@ -439,6 +457,7 @@ class MainFrame(wx.Frame):
             return
         elapsed = int(time.monotonic() - self._working_started_at)
         self._turn_status = format_working_status(elapsed)
+        self._working_gauge.Pulse()
         self._update_status_bar()
 
     def set_model(self, model: str) -> None:

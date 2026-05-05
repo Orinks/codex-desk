@@ -154,7 +154,6 @@ class SessionController:
     def _on_process_exit(self) -> None:
         """Handle Codex process exit."""
         wx.CallAfter(self._main_frame.stop_working_status, "Disconnected")
-        wx.CallAfter(self._main_frame.append_transcript, "\n[Codex process exited]\n")
 
     # ------------------------------------------------------------------
     # Event handlers (run on main wx thread via CallAfter)
@@ -175,7 +174,7 @@ class SessionController:
 
     def _on_turn_end(self, event: TurnEndEvent) -> None:
         """Handle turn_end event."""
-        self._main_frame.append_transcript("\n")
+        self._main_frame.append_transcript("\n\n")
         self._main_frame.stop_working_status("Idle")
 
     def _on_message_update(self, event: MessageUpdateEvent) -> None:

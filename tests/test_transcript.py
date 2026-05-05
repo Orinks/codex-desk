@@ -31,15 +31,28 @@ def test_minimal_transcript_hides_process_noise():
 def test_minimal_transcript_omits_speaker_prefixes():
     preferences = TranscriptPreferences()
 
-    assert format_user_prompt("Hello", preferences) == "\nHello\n\n"
-    assert format_assistant_prefix(preferences) == "\n"
+    assert format_user_prompt("Hello", preferences) == "Hello\n\n"
+    assert format_assistant_prefix(preferences) == ""
 
 
 def test_role_speaker_labels_are_available():
     preferences = TranscriptPreferences(speaker_labels="role")
 
-    assert format_user_prompt("Hello", preferences) == "\nYou: Hello\n\n"
-    assert format_assistant_prefix(preferences) == "\nAssistant: "
+    assert format_user_prompt("Hello", preferences) == "You: Hello\n\n"
+    assert format_assistant_prefix(preferences) == "Assistant: "
+
+
+def test_minimal_turn_spacing_stays_compact():
+    preferences = TranscriptPreferences()
+
+    transcript = (
+        format_user_prompt("Hello there.", preferences)
+        + format_assistant_prefix(preferences)
+        + "What would you like to work on?"
+        + "\n\n"
+    )
+
+    assert transcript == "Hello there.\n\nWhat would you like to work on?\n\n"
 
 
 def test_transcript_preferences_can_show_tool_and_reasoning_detail():

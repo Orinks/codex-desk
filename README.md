@@ -88,9 +88,10 @@ from Codex stderr are treated as debug diagnostics because they do not block app
 thread startup, or model execution. Unexpected stderr remains visible as a Codex warning.
 
 On the first prompt for a workspace, wxAgent may need to start `codex app-server` and open a Codex
-thread before the turn can run. That startup happens off the UI thread, and the status bar reports
-`Working for X seconds` immediately so the user gets the same kind of feedback the Codex desktop
-app gives while backend work is warming up.
+thread before the turn can run. That startup happens off the UI thread, and a labeled turn-status
+row plus the status bar report `Working for X seconds` immediately so the user gets the same kind
+of feedback the Codex desktop app gives while backend work is warming up. The transcript remains
+conversation-only by default.
 
 Personality is configured in `Edit -> Settings`, not in the composer. Transcript settings default
 to a quiet view without speaker prefixes: user prompts, assistant text, and concise file summaries
