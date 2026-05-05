@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import wx
 
-from wxpi.codex_models import load_model_choices
+from wxpi.codex_models import (
+    default_reasoning_effort_for_model,
+    load_model_choices,
+    reasoning_efforts_for_model,
+)
 from wxpi.preferences import (
     APPROVAL_POLICIES,
     APPROVAL_REVIEWERS,
-    REASONING_EFFORTS,
     SANDBOX_MODES,
     THREAD_MODES,
     ThreadOptions,
@@ -55,9 +58,10 @@ class NewSessionDialog(wx.Dialog):
 
         model_label = wx.StaticText(panel, label="Model:")
         self._model_choice = wx.Choice(panel, choices=model_choices)
+        self._model_choice.Bind(wx.EVT_CHOICE, self._on_model_changed)
 
         reasoning_label = wx.StaticText(panel, label="Reasoning effort:")
-        self._reasoning_choice = wx.Choice(panel, choices=list(REASONING_EFFORTS))
+        self._reasoning_choice = wx.Choice(panel)
 
         mode_label = wx.StaticText(panel, label="Workspace mode:")
         self._mode_choice = wx.Choice(panel, choices=list(THREAD_MODES))
@@ -95,7 +99,7 @@ class NewSessionDialog(wx.Dialog):
     def _populate(self, cwd: str, options: ThreadOptions) -> None:
         self._cwd_picker.SetPath(cwd)
         self._model_choice.SetStringSelection(options.model)
-        self._reasoning_choice.SetStringSelection(options.reasoning_effort)
+        self._set_reasoning_choices_for_model(options.model, options.reasoning_effort)
         self._mode_choice.SetStringSelection(options.mode)
         self._sandbox_choice.SetStringSelection(options.sandbox)
         self._approval_choice.SetStringSelection(options.approval_policy)
@@ -120,8 +124,20 @@ class NewSessionDialog(wx.Dialog):
         self._sync_branch_enabled()
         event.Skip()
 
+    def _on_model_changed(self, event: wx.CommandEvent) -> None:
+        model = self._model_choice.GetStringSelection().strip() or self._options.model
+        current_effort = self._reasoning_choice.GetStringSelection()
+        self._set_reasoning_choices_for_model(model, current_effort)
+        event.Skip()
+
     def _sync_branch_enabled(self) -> None:
         self._base_branch_choice.Enable(self._mode_choice.GetStringSelection() == "worktree")
+
+    def _set_reasoning_choices_for_model(self, model: str, selected_effort: str) -> None:
+        efforts = list(reasoning_efforts_for_model(model))
+        selected = selected_effort if selected_effort in efforts else default_reasoning_effort_for_model(model)
+        self._reasoning_choice.Set(efforts)
+        self._reasoning_choice.SetStringSelection(selected)
 
 
 def _model_choices_with_current(current_model: str) -> list[str]:

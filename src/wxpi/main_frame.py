@@ -5,12 +5,16 @@ import threading
 import time
 import wx
 
-from wxpi.codex_models import load_model_choices
+from wxpi.codex_models import (
+    default_reasoning_effort_for_model,
+    load_model_choices,
+    reasoning_efforts_for_model,
+)
 from wxpi.constants import APP_NAME
 from wxpi.mcp_manager_dialog import McpManagerDialog
 from wxpi.new_session_dialog import NewSessionDialog
 from wxpi.plugin_manager_dialog import PluginManagerDialog
-from wxpi.preferences import AppPreferences, REASONING_EFFORTS, ThreadOptions
+from wxpi.preferences import AppPreferences, ThreadOptions
 from wxpi.profile_dialog import ProfileDialog
 from wxpi.session_controller import SessionController
 from wxpi.settings_dialog import SettingsDialog
@@ -128,8 +132,11 @@ class MainFrame(wx.Frame):
         self._model_choice.Bind(wx.EVT_CHOICE, self._on_model_changed)
 
         reasoning_label = wx.StaticText(main_panel, label="Reasoning effort:")
-        self._reasoning_choice = wx.Choice(main_panel, choices=list(REASONING_EFFORTS))
-        self._reasoning_choice.SetStringSelection(self._thread_options.reasoning_effort)
+        self._reasoning_choice = wx.Choice(main_panel)
+        self._set_reasoning_choices_for_model(
+            self._thread_options.model,
+            self._thread_options.reasoning_effort,
+        )
         self._reasoning_choice.Bind(wx.EVT_CHOICE, self._on_reasoning_changed)
 
         session_sizer.Add(model_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
@@ -258,7 +265,16 @@ class MainFrame(wx.Frame):
         """Update the model for future turns."""
         model = self._model_choice.GetStringSelection().strip()
         if model:
-            self._thread_options = replace(self._thread_options, model=model)
+            reasoning = self._select_supported_reasoning_effort(
+                model,
+                self._thread_options.reasoning_effort,
+            )
+            self._set_reasoning_choices_for_model(model, reasoning)
+            self._thread_options = replace(
+                self._thread_options,
+                model=model,
+                reasoning_effort=reasoning,
+            )
             self._session_controller.set_thread_options(self._thread_options)
             self.set_model(model)
         event.Skip()
@@ -381,7 +397,7 @@ class MainFrame(wx.Frame):
         if self._model_choice.FindString(options.model) == wx.NOT_FOUND:
             self._model_choice.Append(options.model)
         self._model_choice.SetStringSelection(options.model)
-        self._reasoning_choice.SetStringSelection(options.reasoning_effort)
+        self._set_reasoning_choices_for_model(options.model, options.reasoning_effort)
         self._update_title()
         self._update_status_bar()
         self._session_controller.new_session(
@@ -414,6 +430,18 @@ class MainFrame(wx.Frame):
 
     def _clear_pending_prompt(self) -> None:
         self._pending_prompt = False
+
+    def _set_reasoning_choices_for_model(self, model: str, selected_effort: str) -> None:
+        efforts = list(reasoning_efforts_for_model(model))
+        selected = selected_effort if selected_effort in efforts else default_reasoning_effort_for_model(model)
+        self._reasoning_choice.Set(efforts)
+        self._reasoning_choice.SetStringSelection(selected)
+
+    def _select_supported_reasoning_effort(self, model: str, effort: str) -> str:
+        efforts = reasoning_efforts_for_model(model)
+        if effort in efforts:
+            return effort
+        return default_reasoning_effort_for_model(model)
 
     # ------------------------------------------------------------------
     # Public API for SessionController

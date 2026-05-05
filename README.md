@@ -24,7 +24,8 @@ Implemented:
 - New session options for model, reasoning effort, sandbox, approval policy, local workspace, and
   Git worktree-backed sessions.
 - Main-window model and reasoning controls so users can change the next turn without reopening a
-  session dialog.
+  session dialog. Reasoning choices are filtered from Codex's local model metadata so unsupported
+  efforts are not offered for the selected model.
 - Native MCP server manager for listing, adding, removing, logging in, and logging out through
   `codex mcp`.
 - Native Codex plugin manager for marketplace add/upgrade/remove and plugin enable/disable.

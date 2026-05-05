@@ -85,6 +85,31 @@ def test_send_prompt_requires_running_thread(tmp_path):
         raise AssertionError("send_prompt should fail before start()")
 
 
+def test_send_prompt_uses_current_thread_options(monkeypatch):
+    writes = []
+    bridge = CodexAppServerBridge()
+    bridge._thread_id = "thr_test"
+    bridge.set_thread_options(ThreadOptions(model="gpt-5.5", reasoning_effort="low"))
+    monkeypatch.setattr(bridge, "_write", writes.append)
+
+    bridge.send_prompt("hello")
+
+    assert writes == [
+        {
+            "method": "turn/start",
+            "id": 0,
+            "params": {
+                "threadId": "thr_test",
+                "input": [{"type": "text", "text": "hello"}],
+                "model": "gpt-5.5",
+                "effort": "low",
+                "approvalPolicy": "on-request",
+                "approvalsReviewer": "user",
+            },
+        }
+    ]
+
+
 def test_codex_app_server_launch_disables_noisy_analytics():
     assert CODEX_APP_SERVER_ARGS[:2] == ["codex", "app-server"]
     assert "-c" in CODEX_APP_SERVER_ARGS
