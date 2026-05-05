@@ -49,6 +49,10 @@ class SessionController:
         if self._bridge:
             self._bridge.set_thread_options(thread_options)
 
+    def has_active_session(self) -> bool:
+        """Return whether a Codex bridge is available for prompts."""
+        return self._bridge is not None
+
     def new_session(
         self,
         cwd: str,

@@ -115,14 +115,10 @@ class MainFrame(wx.Frame):
         session_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         model_label = wx.StaticText(main_panel, label="Model:")
-        self._model_choice = wx.ComboBox(
-            main_panel,
-            choices=load_model_choices(),
-            style=wx.CB_DROPDOWN,
-        )
-        self._model_choice.SetValue(self._thread_options.model)
-        self._model_choice.Bind(wx.EVT_COMBOBOX, self._on_model_changed)
-        self._model_choice.Bind(wx.EVT_TEXT, self._on_model_changed)
+        model_choices = _model_choices_with_current(self._thread_options.model)
+        self._model_choice = wx.Choice(main_panel, choices=model_choices)
+        self._model_choice.SetStringSelection(self._thread_options.model)
+        self._model_choice.Bind(wx.EVT_CHOICE, self._on_model_changed)
 
         reasoning_label = wx.StaticText(main_panel, label="Reasoning effort:")
         self._reasoning_choice = wx.Choice(main_panel, choices=list(REASONING_EFFORTS))
@@ -217,12 +213,26 @@ class MainFrame(wx.Frame):
         text = self._input.GetValue().strip()
         if not text:
             return
+        if not self._session_controller.has_active_session():
+            try:
+                self._session_controller.new_session(
+                    self._cwd,
+                    preferences=self._preferences,
+                    thread_options=self._thread_options,
+                )
+            except Exception as exc:
+                wx.MessageBox(
+                    f"Could not start Codex session:\n\n{exc}",
+                    "Codex Session",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                return
         self._session_controller.send_prompt(text)
         self._input.Clear()
 
     def _on_model_changed(self, event: wx.CommandEvent) -> None:
         """Update the model for future turns."""
-        model = self._model_choice.GetValue().strip()
+        model = self._model_choice.GetStringSelection().strip()
         if model:
             self._thread_options = replace(self._thread_options, model=model)
             self._session_controller.set_thread_options(self._thread_options)
@@ -343,7 +353,9 @@ class MainFrame(wx.Frame):
 
         self._cwd = session_cwd
         self._thread_options = options
-        self._model_choice.SetValue(options.model)
+        if self._model_choice.FindString(options.model) == wx.NOT_FOUND:
+            self._model_choice.Append(options.model)
+        self._model_choice.SetStringSelection(options.model)
         self._reasoning_choice.SetStringSelection(options.reasoning_effort)
         self._update_title()
         self._update_status_bar()
@@ -376,3 +388,10 @@ class MainFrame(wx.Frame):
     def get_input_focus(self) -> None:
         """Set focus to the input field."""
         wx.CallAfter(self._input.SetFocus)
+
+
+def _model_choices_with_current(current_model: str) -> list[str]:
+    choices = load_model_choices()
+    if current_model not in choices:
+        choices.insert(0, current_model)
+    return choices

@@ -36,7 +36,7 @@ class NewSessionDialog(wx.Dialog):
         """Return selected Codex thread options."""
         base_branch = self._base_branch_choice.GetStringSelection().strip() or None
         return ThreadOptions(
-            model=self._model_choice.GetValue().strip() or self._options.model,
+            model=self._model_choice.GetStringSelection().strip() or self._options.model,
             reasoning_effort=self._reasoning_choice.GetStringSelection(),
             sandbox=self._sandbox_choice.GetStringSelection(),
             approval_policy=self._approval_choice.GetStringSelection(),
@@ -48,13 +48,13 @@ class NewSessionDialog(wx.Dialog):
     def _create_controls(self) -> None:
         panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        model_choices = load_model_choices()
+        model_choices = _model_choices_with_current(self._options.model)
 
         cwd_label = wx.StaticText(panel, label="Workspace folder:")
         self._cwd_picker = wx.DirPickerCtrl(panel, message="Choose a workspace folder")
 
         model_label = wx.StaticText(panel, label="Model:")
-        self._model_choice = wx.ComboBox(panel, choices=model_choices, style=wx.CB_DROPDOWN)
+        self._model_choice = wx.Choice(panel, choices=model_choices)
 
         reasoning_label = wx.StaticText(panel, label="Reasoning effort:")
         self._reasoning_choice = wx.Choice(panel, choices=list(REASONING_EFFORTS))
@@ -94,7 +94,7 @@ class NewSessionDialog(wx.Dialog):
 
     def _populate(self, cwd: str, options: ThreadOptions) -> None:
         self._cwd_picker.SetPath(cwd)
-        self._model_choice.SetValue(options.model)
+        self._model_choice.SetStringSelection(options.model)
         self._reasoning_choice.SetStringSelection(options.reasoning_effort)
         self._mode_choice.SetStringSelection(options.mode)
         self._sandbox_choice.SetStringSelection(options.sandbox)
@@ -122,3 +122,10 @@ class NewSessionDialog(wx.Dialog):
 
     def _sync_branch_enabled(self) -> None:
         self._base_branch_choice.Enable(self._mode_choice.GetStringSelection() == "worktree")
+
+
+def _model_choices_with_current(current_model: str) -> list[str]:
+    choices = load_model_choices()
+    if current_model not in choices:
+        choices.insert(0, current_model)
+    return choices
