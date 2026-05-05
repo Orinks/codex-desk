@@ -1,18 +1,28 @@
 [project]
-name = "wxpi"
+name = "wxagent"
 version = "0.1.0"
-description = "Native accessible wxPython frontend for the Pi coding agent"
+description = "Native accessible wxPython frontend for OpenAI Codex"
 requires-python = ">=3.11"
 dependencies = [
     "wxPython>=4.2.0",
 ]
 
 [project.scripts]
+wxagent = "wxpi.app:main"
 wxpi = "wxpi.app:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/wxpi"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
+]

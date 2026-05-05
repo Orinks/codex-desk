@@ -1,0 +1,164 @@
+"""Codex app-server bridge for wxAgent.
+
+This module owns the local ``codex app-server`` subprocess and speaks the
+JSON-RPC-over-JSONL protocol documented by OpenAI. It normalizes the small set
+of app-server messages the current wx UI needs into the existing internal event
+shape so the UI can evolve without depending on every Codex protocol detail.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import threading
+from typing import Callable
+
+from wxpi.constants import CODEX_BINARY
+
+CODEX_APP_SERVER_ARGS: list[str] = [CODEX_BINARY, "app-server"]
+
+
+class CodexAppServerBridge:
+    """Manage a local Codex app-server process over JSONL."""
+
+    def __init__(self, client_name: str = "wxagent", model: str = "gpt-5.4") -> None:
+        self._client_name = client_name
+        self._model = model
+        self._proc: subprocess.Popen[str] | None = None
+        self._thread: threading.Thread | None = None
+        self._callbacks: list[Callable[[dict], None]] = []
+        self._exit_callbacks: list[Callable[[], None]] = []
+        self._next_id = 0
+        self._thread_start_request_id: int | None = None
+        self._thread_id: str | None = None
+        self._thread_ready = threading.Event()
+
+    def start(self, cwd: str, session_path: str | None = None, continue_session: bool = False) -> None:
+        """Start Codex app-server and open a thread for the selected workspace."""
+        if session_path or continue_session:
+            raise NotImplementedError("Codex thread resume is not wired into wxAgent yet")
+
+        self._proc = subprocess.Popen(
+            list(CODEX_APP_SERVER_ARGS),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            text=True,
+            encoding="utf-8",
+        )
+        self._thread = threading.Thread(
+            target=self._read_loop,
+            daemon=True,
+            name="codex-app-server-reader",
+        )
+        self._thread.start()
+
+        self._send_request(
+            "initialize",
+            {
+                "clientInfo": {
+                    "name": self._client_name,
+                    "title": "wxAgent",
+                    "version": "0.1.0",
+                }
+            },
+        )
+        self._send_notification("initialized", {})
+        self._thread_start_request_id = self._send_request("thread/start", {"model": self._model})
+
+        if not self._thread_ready.wait(timeout=5.0):
+            self.stop()
+            raise RuntimeError("Codex app-server did not start a thread")
+
+    def send_prompt(self, text: str) -> None:
+        """Start a Codex turn from user text."""
+        if not self._thread_id:
+            raise RuntimeError("start a Codex thread before sending prompts")
+        self._send_request(
+            "turn/start",
+            {
+                "threadId": self._thread_id,
+                "input": [{"type": "text", "text": text}],
+            },
+        )
+
+    def send_abort(self) -> None:
+        """Request cancellation of the active turn when supported by Codex."""
+        if self._thread_id:
+            self._send_request("turn/abort", {"threadId": self._thread_id})
+
+    def send_ui_response(self, request_id: str, result: object) -> None:
+        """Send an approval response back to Codex."""
+        self._send_request("approval/answer", {"id": request_id, "result": result})
+
+    def on_event(self, callback: Callable[[dict], None]) -> None:
+        self._callbacks.append(callback)
+
+    def on_process_exit(self, callback: Callable[[], None]) -> None:
+        self._exit_callbacks.append(callback)
+
+    def stop(self) -> None:
+        if self._proc:
+            self._proc.terminate()
+            try:
+                self._proc.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                self._proc.kill()
+            self._proc = None
+        self._thread = None
+
+    def _send_request(self, method: str, params: dict) -> int:
+        request_id = self._next_id
+        self._next_id += 1
+        self._write({"method": method, "id": request_id, "params": params})
+        return request_id
+
+    def _send_notification(self, method: str, params: dict) -> None:
+        self._write({"method": method, "params": params})
+
+    def _write(self, obj: dict) -> None:
+        if not self._proc or not self._proc.stdin:
+            raise RuntimeError("Codex app-server is not running")
+        self._proc.stdin.write(json.dumps(obj) + "\n")
+        self._proc.stdin.flush()
+
+    def _read_loop(self) -> None:
+        assert self._proc and self._proc.stdout
+        while True:
+            line = self._proc.stdout.readline()
+            if not line:
+                break
+            try:
+                message = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            self._handle_message(message)
+        for callback in self._exit_callbacks:
+            callback()
+
+    def _handle_message(self, message: dict) -> None:
+        if message.get("id") == self._thread_start_request_id and "result" in message:
+            thread = message["result"].get("thread", {})
+            self._thread_id = thread.get("id")
+            self._thread_ready.set()
+            self._dispatch({"type": "agent_start", "model": self._model, "session_id": self._thread_id or ""})
+            return
+
+        method = message.get("method")
+        params = message.get("params", {})
+        if method == "turn/started":
+            turn_id = params.get("turn", {}).get("id", "")
+            self._dispatch({"type": "turn_start", "turn_id": turn_id})
+        elif method == "turn/completed":
+            turn_id = params.get("turn", {}).get("id", "")
+            self._dispatch({"type": "turn_end", "turn_id": turn_id})
+        elif method == "item/completed":
+            item = params.get("item", {})
+            text = item.get("text") or item.get("message") or ""
+            if item.get("type") == "agent_message" and text:
+                self._dispatch({"type": "message_update", "delta": text})
+
+    def _dispatch(self, event: dict) -> None:
+        for callback in self._callbacks:
+            callback(event)

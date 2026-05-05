@@ -1,9 +1,9 @@
-"""Main window frame for wxPi."""
+"""Main window frame for wxAgent."""
 import os
 import wx
 
 from wxpi.constants import APP_NAME
-from wxpi.provider_panel import ProviderDialog
+from wxpi.profile_dialog import ProfileDialog
 from wxpi.session_controller import SessionController
 
 
@@ -53,7 +53,7 @@ class MainFrame(wx.Frame):
         file_menu.AppendSeparator()
         file_menu.Append(change_workspace)
         file_menu.AppendSeparator()
-        quit_item = wx.MenuItem(file_menu, wx.ID_EXIT, f"Quit\tCtrl+Q")
+        quit_item = wx.MenuItem(file_menu, wx.ID_EXIT, "Quit\tCtrl+Q")
         file_menu.Append(quit_item)
 
         self.Bind(wx.EVT_MENU, self._on_new_session, new_session)
@@ -67,10 +67,9 @@ class MainFrame(wx.Frame):
         edit_menu.Append(copy_item)
         self.Bind(wx.EVT_MENU, self._on_copy, copy_item)
         
-        # Provider management
-        providers_item = wx.MenuItem(edit_menu, wx.ID_ANY, "Manage Providers...\tCtrl+P")
-        edit_menu.Append(providers_item)
-        self.Bind(wx.EVT_MENU, self._on_manage_providers, providers_item)
+        profiles_item = wx.MenuItem(edit_menu, wx.ID_ANY, "Agent Profiles...\tCtrl+P")
+        edit_menu.Append(profiles_item)
+        self.Bind(wx.EVT_MENU, self._on_manage_profiles, profiles_item)
 
         # Help menu
         help_menu = wx.Menu()
@@ -96,7 +95,7 @@ class MainFrame(wx.Frame):
             wx.ID_ANY,
             style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH2,
         )
-        self._transcript.SetName("Transcript")
+        self._transcript.SetToolTip("Conversation transcript")
         # Set monospace font for transcript
         font = wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, faceName="Courier New")
         self._transcript.SetFont(font)
@@ -107,7 +106,7 @@ class MainFrame(wx.Frame):
             wx.ID_ANY,
             style=wx.TE_MULTILINE | wx.TE_PROCESS_ENTER,
         )
-        self._input.SetName("Message input")
+        self._input.SetToolTip("Message input")
         # Set initial hint text
         self._input.SetHint("Enter your prompt... (Enter to send, Shift+Enter for new line)")
 
@@ -231,9 +230,9 @@ class MainFrame(wx.Frame):
         elif self._transcript.HasFocus():
             self._transcript.Copy()
 
-    def _on_manage_providers(self, event: wx.CommandEvent) -> None:
-        """Open provider management dialog."""
-        dlg = ProviderDialog(self)
+    def _on_manage_profiles(self, event: wx.CommandEvent) -> None:
+        """Open profile management dialog."""
+        dlg = ProfileDialog(self)
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -241,7 +240,7 @@ class MainFrame(wx.Frame):
         """Show about dialog."""
         wx.MessageBox(
             f"{APP_NAME}\n\n"
-            "A native accessible wxPython frontend for the Pi coding agent.\n\n"
+            "A native accessible wxPython frontend for Codex.\n\n"
             "Built with wxPython.",
             f"About {APP_NAME}",
             wx.OK | wx.ICON_INFORMATION,

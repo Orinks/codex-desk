@@ -1,27 +1,83 @@
-# wxPi Architecture Research
+# wxAgent
 
-Architecture document for a proposed native accessible wxPython frontend wrapping the
-[Pi coding agent](https://shittycodingagent.ai) (`badlogic/pi-mono`) as the backend runtime.
+Native, screen-reader-first desktop control plane for the OpenAI Codex CLI.
 
-## Documents
+wxAgent is a wxPython app that gives Codex a native accessible frontend: a transcript, prompt
+input, workspace controls, status updates, approval dialogs, and optional capability profiles.
+The default profile is intentionally vanilla Codex. Extra workflow packs such as Oh My Codex,
+Obra, and Compound Engineering are modeled as opt-in profiles.
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Full system design covering RPC integration,
-  session model, tool approval UX, accessibility architecture, file handling, error behavior,
-  platform concerns, security, and MVP phasing.
+## Current Status
 
-- **[RECOMMENDATION.md](RECOMMENDATION.md)** — Should Josh build on Pi? Yes/no with reasoning.
+This repo is in early MVP implementation.
 
-- **[IMPLEMENTATION.md](IMPLEMENTATION.md)** — First milestones with concrete deliverables
-  and exit criteria.
+Implemented:
 
-## Summary
+- UV-managed Python project.
+- Codex app-server bridge over JSONL/JSON-RPC.
+- Deterministic fake Codex app-server tests, so bridge behavior is tested without live Codex.
+- wxPython shell with transcript, prompt input, menus, status bar, and approval dialog plumbing.
+- First-run panel that can install `@openai/codex` with npm and point users to Codex sign-in.
+- Agent profile registry and a native profile dialog.
 
-**Integration approach:** Pi `--mode rpc` (JSONL over subprocess stdin/stdout).
+Still early:
 
-**UI toolkit:** wxPython 4.2+, native widgets, platform accessibility APIs.
+- Codex resume/thread listing is not wired yet.
+- Tool approval mapping uses the app's internal normalized event contract and needs live Codex
+  protocol hardening.
+- NVDA/manual accessibility testing still needs a documented pass.
+- The old Pi bridge remains under test as legacy scaffold code until the Codex path fully replaces it.
 
-**MVP scope:** Single-session window, streaming transcript (`wx.TextCtrl`), tool approval
-dialog, keyboard navigation, screen reader tested on Windows + NVDA.
+## Requirements
 
-**Dependency strategy:** Pin Pi version, isolate the RPC bridge in one module,
-monitor upstream changelog.
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/)
+- Node.js/npm for installing Codex from npm
+- OpenAI Codex CLI: `npm i -g @openai/codex`
+
+The first Codex run prompts for ChatGPT/API authentication:
+
+```powershell
+codex
+```
+
+## Development
+
+```powershell
+uv sync
+uv run pytest
+uv run wxagent
+```
+
+The package is still named `wxpi` internally from the original scaffold. Product-facing naming is
+now `wxAgent`; a later cleanup can rename the Python package once the Codex bridge has settled.
+
+## Architecture
+
+wxAgent talks to Codex through `codex app-server`, which exposes JSON-RPC messages over JSONL
+stdio. The bridge normalizes Codex app-server messages into a small UI event contract:
+
+- `agent_start`
+- `turn_start`
+- `message_update`
+- `turn_end`
+- `confirm`
+- tool execution start/end events
+
+The wx UI only consumes this normalized contract, keeping Codex protocol details isolated in
+`src/wxpi/codex_app_server_bridge.py`.
+
+## Test Strategy
+
+TDD is the default workflow:
+
+1. Add a fake backend or pure unit test.
+2. Watch it fail.
+3. Implement the smallest production code that makes it pass.
+4. Update docs in the same turn.
+
+Current verification:
+
+```powershell
+uv run pytest
+```

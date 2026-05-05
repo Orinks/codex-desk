@@ -1,18 +1,17 @@
-"""wxPi application entry point."""
+"""wxAgent application entry point."""
 import shutil
 import sys
 
 import wx
 
-from wxpi.constants import APP_NAME, PI_BINARY
+from wxpi.constants import APP_NAME, CODEX_BINARY
 from wxpi.first_run_panel import FirstRunFrame
 from wxpi.main_frame import MainFrame
-from wxpi.auth_service import AuthService
 
 
-def check_pi_configured() -> bool:
-    """Check if Pi has usable auth configured."""
-    return AuthService().is_configured()
+def check_codex_available() -> bool:
+    """Return True when the Codex CLI is available on PATH."""
+    return shutil.which(CODEX_BINARY) is not None
 
 
 class WxPiApp(wx.App):
@@ -23,21 +22,16 @@ class WxPiApp(wx.App):
         self.SetAppName(APP_NAME)
         self.SetVendorName("wxPi")
 
-        # Check if Pi is available on PATH and has a provider configured
-        if not shutil.which(PI_BINARY):
-            # Pi not installed - show first-run panel
-            self._show_first_run()
-        elif not check_pi_configured():
-            # Pi installed but no provider configured - show first-run panel
+        # Check if Codex is available on PATH.
+        if not check_codex_available():
             self._show_first_run()
         else:
-            # Show main window
             self._show_main()
 
         return True
 
     def _show_first_run(self) -> None:
-        """Show the first-run panel when Pi is not found."""
+        """Show the first-run panel when Codex is not found."""
         self._first_run_frame = FirstRunFrame()
         self._first_run_frame.Bind(wx.EVT_BUTTON, self._on_retry_success)
         self._first_run_frame.Show()
@@ -51,8 +45,8 @@ class WxPiApp(wx.App):
 
     def _on_retry_success(self, event: wx.CommandEvent) -> None:
         """Handle retry success - close first-run and show main window."""
-        # Check if Pi is now available
-        if shutil.which(PI_BINARY):
+        # Check if Codex is now available
+        if check_codex_available():
             self._first_run_frame.Close()
             self._show_main()
 

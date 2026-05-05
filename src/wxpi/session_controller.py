@@ -1,11 +1,11 @@
-"""SessionController — wires PiBridge events to the wx UI."""
+"""SessionController — wires Codex events to the wx UI."""
 import os
 from typing import Optional
 
 import wx
 
 from wxpi.approval_dialog import ToolApprovalDialog
-from wxpi.rpc_bridge import PiBridge
+from wxpi.codex_app_server_bridge import CodexAppServerBridge
 from wxpi.rpc_events import (
     AgentEndEvent,
     AgentStartEvent,
@@ -20,15 +20,15 @@ from wxpi.rpc_events import (
 
 
 class SessionController:
-    """Owns the PiBridge and dispatches events to the UI.
+    """Owns the Codex bridge and dispatches events to the UI.
 
-    All PiBridge callbacks run on a background thread. This class
+    All bridge callbacks run on a background thread. This class
     dispatches all UI updates via wx.CallAfter() to ensure thread safety.
     """
 
     def __init__(self, main_frame) -> None:
         self._main_frame = main_frame
-        self._bridge: Optional[PiBridge] = None
+        self._bridge: Optional[CodexAppServerBridge] = None
         self._allow_list: set[str] = set()  # Per-session allow-list for tools
         self._current_tool: Optional[str] = None  # Track current tool for block rendering
 
@@ -36,7 +36,7 @@ class SessionController:
         """Start a new session in the given working directory."""
         self._stop_bridge()
         self._allow_list.clear()
-        self._bridge = PiBridge()
+        self._bridge = CodexAppServerBridge()
         self._bridge.on_event(self._on_event)
         self._bridge.on_process_exit(self._on_process_exit)
         self._bridge.start(cwd=cwd)
@@ -47,13 +47,13 @@ class SessionController:
         self._stop_bridge()
         self._allow_list.clear()
         cwd = os.path.dirname(os.path.dirname(session_path))
-        self._bridge = PiBridge()
+        self._bridge = CodexAppServerBridge()
         self._bridge.on_event(self._on_event)
         self._bridge.on_process_exit(self._on_process_exit)
         self._bridge.start(cwd=cwd, session_path=session_path, continue_session=True)
 
     def send_prompt(self, text: str) -> None:
-        """Send a prompt to Pi."""
+        """Send a prompt to Codex."""
         if self._bridge:
             self._main_frame.set_turn_status("Thinking...")
             self._main_frame.append_transcript(f"\nYou: {text}\n\n")
@@ -71,11 +71,11 @@ class SessionController:
             self._bridge = None
 
     # ------------------------------------------------------------------
-    # PiBridge callbacks (run on background thread)
+    # Bridge callbacks (run on background thread)
     # ------------------------------------------------------------------
 
     def _on_event(self, raw_event: dict) -> None:
-        """Handle an incoming Pi event from the background thread."""
+        """Handle an incoming Codex event from the background thread."""
         event = parse_event(raw_event)
 
         # Dispatch to the appropriate handler via CallAfter for thread safety
@@ -100,9 +100,9 @@ class SessionController:
             wx.CallAfter(self._main_frame.append_transcript, f"\n[Unknown event: {raw_event.get('type', '?')}]\n")
 
     def _on_process_exit(self) -> None:
-        """Handle Pi process exit."""
+        """Handle Codex process exit."""
         wx.CallAfter(self._main_frame.set_turn_status, "Disconnected")
-        wx.CallAfter(self._main_frame.append_transcript, "\n[Pi process exited]\n")
+        wx.CallAfter(self._main_frame.append_transcript, "\n[Codex process exited]\n")
 
     # ------------------------------------------------------------------
     # Event handlers (run on main wx thread via CallAfter)
@@ -117,7 +117,7 @@ class SessionController:
     def _on_agent_end(self, event: AgentEndEvent) -> None:
         """Handle agent_end event."""
         self._main_frame.set_turn_status("Idle")
-        self._main_frame.append_transcript(f"\n[Agent finished]\n")
+        self._main_frame.append_transcript("\n[Agent finished]\n")
         self._main_frame.get_input_focus()
 
     def _on_turn_start(self, event: TurnStartEvent) -> None:

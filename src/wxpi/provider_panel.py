@@ -5,9 +5,6 @@ import subprocess
 
 import wx
 
-from wxpi.constants import APP_NAME, PI_BINARY
-
-
 # List of all supported providers and their info
 PROVIDERS = [
     {
@@ -494,8 +491,6 @@ class ProviderPanel(wx.Panel):
             return
         
         provider = PROVIDERS[selection]
-        provider_id = provider["id"]
-        
         result = wx.MessageBox(
             f"Remove configuration for {provider['name']}?",
             "Confirm Removal",
