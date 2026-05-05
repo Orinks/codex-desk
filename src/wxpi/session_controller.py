@@ -43,6 +43,12 @@ class SessionController:
         """Apply transcript preferences for future bridge events."""
         self._preferences = preferences
 
+    def set_thread_options(self, thread_options: ThreadOptions) -> None:
+        """Apply thread options for future turns and sessions."""
+        self._thread_options = thread_options
+        if self._bridge:
+            self._bridge.set_thread_options(thread_options)
+
     def new_session(
         self,
         cwd: str,

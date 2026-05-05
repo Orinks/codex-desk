@@ -34,6 +34,7 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
         reasoning_effort="high",
         sandbox="read-only",
         approval_policy="never",
+        approvals_reviewer="auto_review",
     )
 
     bridge.start(cwd=str(tmp_path), preferences=preferences, thread_options=thread_options)
@@ -62,11 +63,15 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
         "personality": "pragmatic",
         "sandbox": "read-only",
         "approvalPolicy": "never",
+        "approvalsReviewer": "auto_review",
         "sessionStartSource": "startup",
     }
     assert messages[3]["params"]["threadId"] == "thr_test"
     assert messages[3]["params"]["input"] == [{"type": "text", "text": "hello"}]
+    assert messages[3]["params"]["model"] == "gpt-5.5"
     assert messages[3]["params"]["effort"] == "high"
+    assert messages[3]["params"]["approvalPolicy"] == "never"
+    assert messages[3]["params"]["approvalsReviewer"] == "auto_review"
 
 
 def test_send_prompt_requires_running_thread(tmp_path):

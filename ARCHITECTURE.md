@@ -39,7 +39,8 @@ The bridge currently normalizes supported app-server messages into these interna
 - `file_change_summary`
 
 `thread/start` is parameterized from native session controls: working directory, model,
-personality, sandbox mode, and approval policy. `turn/start` carries the selected reasoning effort.
+personality, sandbox mode, approval policy, and approval reviewer. `turn/start` carries the selected
+model, reasoning effort, approval policy, and approval reviewer.
 Cloud execution is not currently exposed because this app talks directly to the local Codex
 app-server process.
 
@@ -64,6 +65,13 @@ The default transcript is intentionally minimal: what the user wrote, what the a
 warnings that may require attention, and a concise file summary when Codex reports file changes.
 Tool-call blocks and reasoning summaries are configurable in settings so power users can opt into
 more process detail without making the composer busy.
+
+## Accessibility
+
+wxAgent follows wxPython's screen reader pattern: visible `wx.StaticText` labels are placed
+immediately before text inputs, combo boxes, choices, and read-only transcript fields. The main
+window keeps model and reasoning controls outside the composer so the prompt edit box remains
+focused on message entry.
 
 ## Workspaces
 

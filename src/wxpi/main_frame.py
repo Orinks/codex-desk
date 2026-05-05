@@ -1,12 +1,14 @@
 """Main window frame for wxAgent."""
+from dataclasses import replace
 import os
 import wx
 
+from wxpi.codex_models import load_model_choices
 from wxpi.constants import APP_NAME
 from wxpi.mcp_manager_dialog import McpManagerDialog
 from wxpi.new_session_dialog import NewSessionDialog
 from wxpi.plugin_manager_dialog import PluginManagerDialog
-from wxpi.preferences import AppPreferences, ThreadOptions
+from wxpi.preferences import AppPreferences, REASONING_EFFORTS, ThreadOptions
 from wxpi.profile_dialog import ProfileDialog
 from wxpi.session_controller import SessionController
 from wxpi.settings_dialog import SettingsDialog
@@ -110,8 +112,29 @@ class MainFrame(wx.Frame):
         # Main panel holds transcript and input
         main_panel = wx.Panel(self, wx.ID_ANY)
         sizer = wx.BoxSizer(wx.VERTICAL)
+        session_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        # Transcript area (read-only TextCtrl per ARCH recommendation)
+        model_label = wx.StaticText(main_panel, label="Model:")
+        self._model_choice = wx.ComboBox(
+            main_panel,
+            choices=load_model_choices(),
+            style=wx.CB_DROPDOWN,
+        )
+        self._model_choice.SetValue(self._thread_options.model)
+        self._model_choice.Bind(wx.EVT_COMBOBOX, self._on_model_changed)
+        self._model_choice.Bind(wx.EVT_TEXT, self._on_model_changed)
+
+        reasoning_label = wx.StaticText(main_panel, label="Reasoning effort:")
+        self._reasoning_choice = wx.Choice(main_panel, choices=list(REASONING_EFFORTS))
+        self._reasoning_choice.SetStringSelection(self._thread_options.reasoning_effort)
+        self._reasoning_choice.Bind(wx.EVT_CHOICE, self._on_reasoning_changed)
+
+        session_sizer.Add(model_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
+        session_sizer.Add(self._model_choice, proportion=1, flag=wx.RIGHT, border=12)
+        session_sizer.Add(reasoning_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
+        session_sizer.Add(self._reasoning_choice, flag=wx.RIGHT, border=4)
+
+        transcript_label = wx.StaticText(main_panel, label="Conversation transcript:")
         self._transcript = wx.TextCtrl(
             main_panel,
             wx.ID_ANY,
@@ -122,7 +145,7 @@ class MainFrame(wx.Frame):
         font = wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, faceName="Courier New")
         self._transcript.SetFont(font)
 
-        # Input area (multiline text control)
+        prompt_label = wx.StaticText(main_panel, label="Prompt:")
         self._input = wx.TextCtrl(
             main_panel,
             wx.ID_ANY,
@@ -135,7 +158,10 @@ class MainFrame(wx.Frame):
         # Bind input events
         self.Bind(wx.EVT_TEXT_ENTER, self._on_submit_prompt, self._input)
 
+        sizer.Add(session_sizer, flag=wx.EXPAND | wx.ALL, border=4)
+        sizer.Add(transcript_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(self._transcript, proportion=8, flag=wx.EXPAND)
+        sizer.Add(prompt_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(self._input, proportion=2, flag=wx.EXPAND | wx.ALL, border=4)
 
         main_panel.SetSizer(sizer)
@@ -193,6 +219,23 @@ class MainFrame(wx.Frame):
             return
         self._session_controller.send_prompt(text)
         self._input.Clear()
+
+    def _on_model_changed(self, event: wx.CommandEvent) -> None:
+        """Update the model for future turns."""
+        model = self._model_choice.GetValue().strip()
+        if model:
+            self._thread_options = replace(self._thread_options, model=model)
+            self._session_controller.set_thread_options(self._thread_options)
+            self.set_model(model)
+        event.Skip()
+
+    def _on_reasoning_changed(self, event: wx.CommandEvent) -> None:
+        """Update reasoning effort for future turns."""
+        reasoning = self._reasoning_choice.GetStringSelection()
+        if reasoning:
+            self._thread_options = replace(self._thread_options, reasoning_effort=reasoning)
+            self._session_controller.set_thread_options(self._thread_options)
+        event.Skip()
 
     def _on_new_session(self, event: wx.CommandEvent) -> None:
         """Start a new session."""
@@ -300,6 +343,8 @@ class MainFrame(wx.Frame):
 
         self._cwd = session_cwd
         self._thread_options = options
+        self._model_choice.SetValue(options.model)
+        self._reasoning_choice.SetStringSelection(options.reasoning_effort)
         self._update_title()
         self._update_status_bar()
         self._session_controller.new_session(

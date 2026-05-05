@@ -112,6 +112,7 @@ class CodexAppServerBridge:
                 "personality": self._preferences.personality,
                 "sandbox": self._thread_options.sandbox,
                 "approvalPolicy": self._thread_options.approval_policy,
+                "approvalsReviewer": self._thread_options.approvals_reviewer,
                 "sessionStartSource": "startup",
             },
         )
@@ -129,9 +130,16 @@ class CodexAppServerBridge:
             {
                 "threadId": self._thread_id,
                 "input": [{"type": "text", "text": text}],
+                "model": self._thread_options.model,
                 "effort": self._thread_options.reasoning_effort,
+                "approvalPolicy": self._thread_options.approval_policy,
+                "approvalsReviewer": self._thread_options.approvals_reviewer,
             },
         )
+
+    def set_thread_options(self, thread_options: ThreadOptions) -> None:
+        """Update options used for subsequent turns."""
+        self._thread_options = thread_options
 
     def send_abort(self) -> None:
         """Request cancellation of the active turn when supported by Codex."""

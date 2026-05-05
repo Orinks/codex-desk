@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import wx
 
+from wxpi.codex_models import load_model_choices
 from wxpi.preferences import (
     APPROVAL_POLICIES,
+    APPROVAL_REVIEWERS,
     REASONING_EFFORTS,
     SANDBOX_MODES,
     THREAD_MODES,
@@ -34,10 +36,11 @@ class NewSessionDialog(wx.Dialog):
         """Return selected Codex thread options."""
         base_branch = self._base_branch_choice.GetStringSelection().strip() or None
         return ThreadOptions(
-            model=self._model_input.GetValue().strip() or self._options.model,
+            model=self._model_choice.GetValue().strip() or self._options.model,
             reasoning_effort=self._reasoning_choice.GetStringSelection(),
             sandbox=self._sandbox_choice.GetStringSelection(),
             approval_policy=self._approval_choice.GetStringSelection(),
+            approvals_reviewer=self._reviewer_choice.GetStringSelection(),
             mode=self._mode_choice.GetStringSelection(),
             base_branch=base_branch,
         )
@@ -45,12 +48,13 @@ class NewSessionDialog(wx.Dialog):
     def _create_controls(self) -> None:
         panel = wx.Panel(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
+        model_choices = load_model_choices()
 
         cwd_label = wx.StaticText(panel, label="Workspace folder:")
         self._cwd_picker = wx.DirPickerCtrl(panel, message="Choose a workspace folder")
 
         model_label = wx.StaticText(panel, label="Model:")
-        self._model_input = wx.TextCtrl(panel)
+        self._model_choice = wx.ComboBox(panel, choices=model_choices, style=wx.CB_DROPDOWN)
 
         reasoning_label = wx.StaticText(panel, label="Reasoning effort:")
         self._reasoning_choice = wx.Choice(panel, choices=list(REASONING_EFFORTS))
@@ -68,14 +72,18 @@ class NewSessionDialog(wx.Dialog):
         approval_label = wx.StaticText(panel, label="Approval policy:")
         self._approval_choice = wx.Choice(panel, choices=list(APPROVAL_POLICIES))
 
+        reviewer_label = wx.StaticText(panel, label="Approval reviewer:")
+        self._reviewer_choice = wx.Choice(panel, choices=list(APPROVAL_REVIEWERS))
+
         for label, control in (
             (cwd_label, self._cwd_picker),
-            (model_label, self._model_input),
+            (model_label, self._model_choice),
             (reasoning_label, self._reasoning_choice),
             (mode_label, self._mode_choice),
             (branch_label, self._base_branch_choice),
             (sandbox_label, self._sandbox_choice),
             (approval_label, self._approval_choice),
+            (reviewer_label, self._reviewer_choice),
         ):
             sizer.Add(label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=8)
             sizer.Add(control, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=8)
@@ -86,11 +94,12 @@ class NewSessionDialog(wx.Dialog):
 
     def _populate(self, cwd: str, options: ThreadOptions) -> None:
         self._cwd_picker.SetPath(cwd)
-        self._model_input.SetValue(options.model)
+        self._model_choice.SetValue(options.model)
         self._reasoning_choice.SetStringSelection(options.reasoning_effort)
         self._mode_choice.SetStringSelection(options.mode)
         self._sandbox_choice.SetStringSelection(options.sandbox)
         self._approval_choice.SetStringSelection(options.approval_policy)
+        self._reviewer_choice.SetStringSelection(options.approvals_reviewer)
         self._populate_branches(cwd, options.base_branch)
         self._sync_branch_enabled()
 

@@ -22,6 +22,8 @@ Implemented:
 - Native settings for Codex personality and transcript verbosity.
 - New session options for model, reasoning effort, sandbox, approval policy, local workspace, and
   Git worktree-backed sessions.
+- Main-window model and reasoning controls so users can change the next turn without reopening a
+  session dialog.
 - Native MCP server manager for listing, adding, removing, logging in, and logging out through
   `codex mcp`.
 - Native Codex plugin manager for marketplace add/upgrade/remove and plugin enable/disable.
@@ -87,6 +89,10 @@ thread startup, or model execution. Unexpected stderr remains visible as a Codex
 Personality is configured in `Edit -> Settings`, not in the composer. Transcript settings default
 to a quiet view: user prompts, assistant text, diagnostics, and concise file summaries such as
 `Created 1 file, edited 2 files.` Tool calls and reasoning summaries are opt-in.
+
+The main window and session dialogs use visible labels before edit boxes and combo boxes for screen
+reader compatibility. Accessibility verification steps live in
+`docs/accessibility-test-plan.md`.
 
 MCP servers are managed from `Tools -> MCP Servers`. wxAgent shells out to the Codex CLI for the
 supported lifecycle commands rather than editing MCP entries by hand.

@@ -23,11 +23,13 @@ def test_thread_options_validate_known_values():
         reasoning_effort="high",
         sandbox="read-only",
         approval_policy="never",
+        approvals_reviewer="auto_review",
         mode="worktree",
         base_branch="main",
     )
 
     assert options.reasoning_effort == "high"
+    assert options.approvals_reviewer == "auto_review"
     assert options.mode == "worktree"
 
 

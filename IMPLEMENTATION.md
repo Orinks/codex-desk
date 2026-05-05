@@ -22,6 +22,8 @@ The active UI path uses `CodexAppServerBridge` through `SessionController`.
 - Added bridge tests for session options and concise file-change summaries.
 - Added `codex mcp` service tests and a native MCP server manager dialog.
 - Added `codex plugin marketplace` service tests and a native Codex plugin manager dialog.
+- Added main-window model/reasoning selectors, Codex model cache loading, `auto_review` approval
+  reviewer support, and a reusable accessibility test plan.
 - Implemented bridge/profile code until tests passed.
 - Kept the old bridge regression tests passing.
 

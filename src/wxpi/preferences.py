@@ -9,6 +9,7 @@ PERSONALITIES = ("none", "friendly", "pragmatic")
 REASONING_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh")
 SANDBOX_MODES = ("read-only", "workspace-write", "danger-full-access")
 APPROVAL_POLICIES = ("untrusted", "on-request", "never")
+APPROVAL_REVIEWERS = ("user", "auto_review")
 THREAD_MODES = ("local", "worktree")
 
 
@@ -42,6 +43,7 @@ class ThreadOptions:
     reasoning_effort: str = "medium"
     sandbox: str = "workspace-write"
     approval_policy: str = "on-request"
+    approvals_reviewer: str = "user"
     mode: str = "local"
     base_branch: str | None = None
 
@@ -52,5 +54,7 @@ class ThreadOptions:
             raise ValueError(f"unknown sandbox mode: {self.sandbox}")
         if self.approval_policy not in APPROVAL_POLICIES:
             raise ValueError(f"unknown approval policy: {self.approval_policy}")
+        if self.approvals_reviewer not in APPROVAL_REVIEWERS:
+            raise ValueError(f"unknown approvals reviewer: {self.approvals_reviewer}")
         if self.mode not in THREAD_MODES:
             raise ValueError(f"unknown thread mode: {self.mode}")
