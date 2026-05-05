@@ -24,6 +24,8 @@ The active UI path uses `CodexAppServerBridge` through `SessionController`.
 - Added `codex plugin marketplace` service tests and a native Codex plugin manager dialog.
 - Added main-window model/reasoning selectors, Codex model cache loading, `auto_review` approval
   reviewer support, and a reusable accessibility test plan.
+- Hid diagnostics by default and downgraded known non-fatal Codex plugin/shell snapshot stderr
+  messages so they do not clutter the transcript.
 - Implemented bridge/profile code until tests passed.
 - Kept the old bridge regression tests passing.
 

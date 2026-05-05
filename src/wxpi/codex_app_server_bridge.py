@@ -31,9 +31,16 @@ BENIGN_CODEX_WARNING_HINTS = (
     "codex_core::plugins::startup_sync",
     "codex_core::plugins::manager",
     "codex_analytics::client",
+    "codex_core::plugins::manifest",
+    "codex_core::shell_snapshot",
     "backend-api/plugins/list",
     "backend-api/plugins/featured",
     "backend-api/codex/analytics-events/events",
+    "prompt must be at most",
+    "maximum of 3 prompts is supported",
+    "Shell snapshot not supported",
+    "AuthRequired",
+    "worker quit fatal",
 )
 
 
@@ -296,11 +303,46 @@ def _classify_stderr_line(line: str) -> dict | None:
     if not message:
         return None
 
-    if any(hint in message for hint in BENIGN_CODEX_WARNING_HINTS) and "403" in message:
+    parsed_message = _extract_codex_log_message(message)
+    if _is_benign_codex_noise(parsed_message):
         return {
             "type": "diagnostic",
             "severity": "debug",
-            "message": "Ignored non-fatal Codex plugin/analytics 403 warning.",
+            "message": "Ignored non-fatal Codex app-server diagnostic.",
+        }
+
+    if _is_benign_codex_noise(message):
+        return {
+            "type": "diagnostic",
+            "severity": "debug",
+            "message": "Ignored non-fatal Codex app-server diagnostic.",
         }
 
     return {"type": "diagnostic", "severity": "warning", "message": message}
+
+
+def _extract_codex_log_message(raw_message: str) -> str:
+    try:
+        payload = json.loads(raw_message)
+    except json.JSONDecodeError:
+        return raw_message
+
+    fields = payload.get("fields")
+    if isinstance(fields, dict):
+        message = fields.get("message")
+        if isinstance(message, str):
+            return message
+    if isinstance(fields, str):
+        try:
+            nested_fields = json.loads(fields)
+        except json.JSONDecodeError:
+            return fields
+        if isinstance(nested_fields, dict):
+            message = nested_fields.get("message")
+            if isinstance(message, str):
+                return message
+    return raw_message
+
+
+def _is_benign_codex_noise(message: str) -> bool:
+    return any(hint in message for hint in BENIGN_CODEX_WARNING_HINTS)

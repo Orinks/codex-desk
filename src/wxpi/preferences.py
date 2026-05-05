@@ -19,7 +19,7 @@ class TranscriptPreferences:
 
     show_tool_calls: bool = False
     show_reasoning: bool = False
-    show_diagnostics: bool = True
+    show_diagnostics: bool = False
     show_file_summaries: bool = True
 
 

@@ -18,6 +18,7 @@ def test_minimal_transcript_hides_process_noise():
     assert not should_show_event("tool_execution_start", preferences)
     assert not should_show_event("tool_execution_end", preferences)
     assert not should_show_event("reasoning_update", preferences)
+    assert not should_show_event("diagnostic", preferences)
     assert should_show_event("message_update", preferences)
     assert should_show_event("file_change_summary", preferences)
 

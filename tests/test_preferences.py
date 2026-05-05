@@ -12,7 +12,7 @@ def test_default_preferences_keep_transcript_minimal():
     assert prefs.transcript == TranscriptPreferences(
         show_tool_calls=False,
         show_reasoning=False,
-        show_diagnostics=True,
+        show_diagnostics=False,
         show_file_summaries=True,
     )
 

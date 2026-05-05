@@ -105,9 +105,32 @@ def test_codex_403_plugin_and_analytics_warnings_are_debug_diagnostics():
     assert _classify_stderr_line(plugin_warning) == {
         "type": "diagnostic",
         "severity": "debug",
-        "message": "Ignored non-fatal Codex plugin/analytics 403 warning.",
+        "message": "Ignored non-fatal Codex app-server diagnostic.",
     }
     assert _classify_stderr_line(analytics_warning)["severity"] == "debug"
+
+
+def test_structured_plugin_and_shell_snapshot_noise_are_debug_diagnostics():
+    prompt_warning = (
+        '{"timestamp":"2026-05-05T23:19:44Z","level":"WARN","fields":'
+        '{"message":"ignoring facade.defaultPrompt: prompt must be at most 128 characters",'
+        '"path":"C:\\\\Users\\\\joshu\\\\.codex\\\\.tmp\\\\plugins\\\\plugins\\\\build-ios-apps\\\\.codex\\\\plugin.json"},'
+        '"target":"codex_core::plugins::manifest"}'
+    )
+    shell_warning = (
+        '{"timestamp":"2026-05-05T23:19:45Z","level":"WARN","fields":'
+        '{"message":"Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell"},'
+        '"target":"codex_core::shell_snapshot"}'
+    )
+    auth_warning = (
+        '{"timestamp":"2026-05-05T23:19:45Z","level":"ERROR","fields":'
+        '{"message":"worker quit fatal: Transport channel closed, when AuthRequired"},'
+        '"target":"codex_core::plugins::manager"}'
+    )
+
+    assert _classify_stderr_line(prompt_warning)["severity"] == "debug"
+    assert _classify_stderr_line(shell_warning)["severity"] == "debug"
+    assert _classify_stderr_line(auth_warning)["severity"] == "debug"
 
 
 def test_unexpected_stderr_stays_visible():

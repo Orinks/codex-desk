@@ -61,10 +61,10 @@ Future Codex protocol work belongs inside `CodexAppServerBridge`, not in the wx 
 
 ## Transcript Policy
 
-The default transcript is intentionally minimal: what the user wrote, what the assistant said,
-warnings that may require attention, and a concise file summary when Codex reports file changes.
-Tool-call blocks and reasoning summaries are configurable in settings so power users can opt into
-more process detail without making the composer busy.
+The default transcript is intentionally minimal: what the user wrote, what the assistant said, and a
+concise file summary when Codex reports file changes. Tool-call blocks, reasoning summaries, and
+Codex diagnostics are configurable in settings so power users can opt into process detail without
+making the composer busy.
 
 ## Accessibility
 
