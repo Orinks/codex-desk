@@ -21,7 +21,12 @@ from wxpi.rpc_events import (
     TurnEndEvent,
     TurnStartEvent,
 )
-from wxpi.transcript import format_assistant_prefix, format_file_summary, format_user_prompt, should_show_event
+from wxpi.transcript import (
+    format_assistant_prefix,
+    format_file_summary,
+    format_user_prompt,
+    should_show_event,
+)
 
 
 class SessionController:
@@ -93,7 +98,7 @@ class SessionController:
     def send_prompt(self, text: str) -> None:
         """Send a prompt to Codex."""
         if self._bridge:
-            self._main_frame.set_turn_status("Thinking...")
+            self._main_frame.start_working_status()
             self._main_frame.append_transcript(format_user_prompt(text, self._preferences.transcript))
             self._bridge.send_prompt(text)
 
@@ -148,7 +153,7 @@ class SessionController:
 
     def _on_process_exit(self) -> None:
         """Handle Codex process exit."""
-        wx.CallAfter(self._main_frame.set_turn_status, "Disconnected")
+        wx.CallAfter(self._main_frame.stop_working_status, "Disconnected")
         wx.CallAfter(self._main_frame.append_transcript, "\n[Codex process exited]\n")
 
     # ------------------------------------------------------------------
@@ -158,11 +163,10 @@ class SessionController:
     def _on_agent_start(self, event: AgentStartEvent) -> None:
         """Handle agent_start event."""
         self._main_frame.set_model(event.model)
-        self._main_frame.set_turn_status("Thinking...")
 
     def _on_agent_end(self, event: AgentEndEvent) -> None:
         """Handle agent_end event."""
-        self._main_frame.set_turn_status("Idle")
+        self._main_frame.stop_working_status("Idle")
         self._main_frame.get_input_focus()
 
     def _on_turn_start(self, event: TurnStartEvent) -> None:
@@ -172,6 +176,7 @@ class SessionController:
     def _on_turn_end(self, event: TurnEndEvent) -> None:
         """Handle turn_end event."""
         self._main_frame.append_transcript("\n")
+        self._main_frame.stop_working_status("Idle")
 
     def _on_message_update(self, event: MessageUpdateEvent) -> None:
         """Handle message_update event (streaming text)."""

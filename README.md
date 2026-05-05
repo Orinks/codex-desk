@@ -19,6 +19,7 @@ Implemented:
   warnings.
 - Deterministic fake Codex app-server tests, so bridge behavior is tested without live Codex.
 - wxPython shell with transcript, prompt input, menus, status bar, and approval dialog plumbing.
+- Desktop-style turn status that starts immediately on submit and reports elapsed working time.
 - Native settings for Codex personality and transcript verbosity.
 - New session options for model, reasoning effort, sandbox, approval policy, local workspace, and
   Git worktree-backed sessions.
@@ -85,6 +86,11 @@ wxAgent launches app-server with `analytics.enabled=false` so it does not inheri
 opt-ins from a user's main Codex profile. Known plugin marketplace and analytics `403` warnings
 from Codex stderr are treated as debug diagnostics because they do not block app-server auth,
 thread startup, or model execution. Unexpected stderr remains visible as a Codex warning.
+
+On the first prompt for a workspace, wxAgent may need to start `codex app-server` and open a Codex
+thread before the turn can run. That startup happens off the UI thread, and the status bar reports
+`Working for X seconds` immediately so the user gets the same kind of feedback the Codex desktop
+app gives while backend work is warming up.
 
 Personality is configured in `Edit -> Settings`, not in the composer. Transcript settings default
 to a quiet view without speaker prefixes: user prompts, assistant text, and concise file summaries

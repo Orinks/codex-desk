@@ -11,6 +11,8 @@ Test with keyboard first, then NVDA Speech Viewer or Narrator.
 - `Tab` reaches the transcript. Expected announcement: "Conversation transcript, edit, read only".
 - `Tab` reaches the prompt field. Expected announcement: "Prompt, edit".
 - Changing model or reasoning effort updates the next Codex turn without moving focus unexpectedly.
+- Submitting a prompt updates the status bar to elapsed text such as "Working for 3 seconds" until
+  the turn finishes.
 
 ## New Session and Change Workspace
 

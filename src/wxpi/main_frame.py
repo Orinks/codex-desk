@@ -1,6 +1,8 @@
 """Main window frame for wxAgent."""
 from dataclasses import replace
 import os
+import threading
+import time
 import wx
 
 from wxpi.codex_models import load_model_choices
@@ -12,6 +14,7 @@ from wxpi.preferences import AppPreferences, REASONING_EFFORTS, ThreadOptions
 from wxpi.profile_dialog import ProfileDialog
 from wxpi.session_controller import SessionController
 from wxpi.settings_dialog import SettingsDialog
+from wxpi.working_status import format_working_status
 from wxpi.worktrees import create_worktree
 
 
@@ -32,6 +35,8 @@ class MainFrame(wx.Frame):
         self._turn_status = "Idle"
         self._preferences = AppPreferences()
         self._thread_options = ThreadOptions()
+        self._working_started_at: float | None = None
+        self._pending_prompt = False
 
         # Create the session controller (owns PiBridge)
         self._session_controller = SessionController(self)
@@ -43,6 +48,8 @@ class MainFrame(wx.Frame):
 
         # Wire up keyboard shortcuts
         self._bind_shortcuts()
+        self._working_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self._on_working_timer, self._working_timer)
 
         # Update initial window title
         self._update_title()
@@ -214,21 +221,21 @@ class MainFrame(wx.Frame):
         if not text:
             return
         if not self._session_controller.has_active_session():
-            try:
-                self._session_controller.new_session(
-                    self._cwd,
-                    preferences=self._preferences,
-                    thread_options=self._thread_options,
-                )
-            except Exception as exc:
-                wx.MessageBox(
-                    f"Could not start Codex session:\n\n{exc}",
-                    "Codex Session",
-                    wx.OK | wx.ICON_ERROR,
-                )
+            if self._pending_prompt:
+                self.append_transcript("\n[Still starting Codex. Try again after the current prompt begins.]\n")
                 return
-        self._session_controller.send_prompt(text)
         self._input.Clear()
+        self.start_working_status()
+        if not self._session_controller.has_active_session():
+            self._pending_prompt = True
+            threading.Thread(
+                target=self._start_default_session_and_send_prompt,
+                args=(text,),
+                daemon=True,
+                name="wxagent-session-start",
+            ).start()
+            return
+        self._session_controller.send_prompt(text)
 
     def _on_model_changed(self, event: wx.CommandEvent) -> None:
         """Update the model for future turns."""
@@ -290,6 +297,7 @@ class MainFrame(wx.Frame):
     def _on_abort(self, event: wx.CommandEvent) -> None:
         """Abort the current operation (Escape key)."""
         self._session_controller.send_abort()
+        self.stop_working_status("Idle")
 
     def _on_copy(self, event: wx.CommandEvent) -> None:
         """Copy selected text."""
@@ -365,6 +373,31 @@ class MainFrame(wx.Frame):
             thread_options=self._thread_options,
         )
 
+    def _start_default_session_and_send_prompt(self, text: str) -> None:
+        """Start the default local session without blocking the UI, then send the prompt."""
+        try:
+            self._session_controller.new_session(
+                self._cwd,
+                preferences=self._preferences,
+                thread_options=self._thread_options,
+            )
+            self._session_controller.send_prompt(text)
+        except Exception as exc:
+            wx.CallAfter(self._show_session_start_error, exc)
+        finally:
+            wx.CallAfter(self._clear_pending_prompt)
+
+    def _show_session_start_error(self, exc: Exception) -> None:
+        self.stop_working_status("Idle")
+        wx.MessageBox(
+            f"Could not start Codex session:\n\n{exc}",
+            "Codex Session",
+            wx.OK | wx.ICON_ERROR,
+        )
+
+    def _clear_pending_prompt(self) -> None:
+        self._pending_prompt = False
+
     # ------------------------------------------------------------------
     # Public API for SessionController
     # ------------------------------------------------------------------
@@ -376,8 +409,37 @@ class MainFrame(wx.Frame):
 
     def set_turn_status(self, status: str) -> None:
         """Update the turn status in the status bar."""
+        if status == "Idle" and self._working_started_at is not None:
+            return
         self._turn_status = status
         wx.CallAfter(self._update_status_bar)
+
+    def start_working_status(self) -> None:
+        """Start desktop-style elapsed working status updates."""
+        if self._working_started_at is None:
+            self._working_started_at = time.monotonic()
+            self._turn_status = format_working_status(0)
+            wx.CallAfter(self._update_status_bar)
+        wx.CallAfter(self._ensure_working_timer)
+
+    def stop_working_status(self, status: str = "Idle") -> None:
+        """Stop elapsed working status updates and set the final status."""
+        self._working_started_at = None
+        if self._working_timer.IsRunning():
+            self._working_timer.Stop()
+        self.set_turn_status(status)
+
+    def _ensure_working_timer(self) -> None:
+        if not self._working_timer.IsRunning():
+            self._working_timer.Start(1000)
+
+    def _on_working_timer(self, event: wx.TimerEvent) -> None:
+        if self._working_started_at is None:
+            self._working_timer.Stop()
+            return
+        elapsed = int(time.monotonic() - self._working_started_at)
+        self._turn_status = format_working_status(elapsed)
+        self._update_status_bar()
 
     def set_model(self, model: str) -> None:
         """Update the model name in the status bar and title."""
