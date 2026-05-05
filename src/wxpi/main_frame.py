@@ -41,6 +41,7 @@ class MainFrame(wx.Frame):
         self._thread_options = ThreadOptions()
         self._working_started_at: float | None = None
         self._pending_prompt = False
+        self._turn_details = "No turn yet"
 
         # Create the session controller (owns PiBridge)
         self._session_controller = SessionController(self)
@@ -158,6 +159,8 @@ class MainFrame(wx.Frame):
         turn_status_sizer = wx.BoxSizer(wx.HORIZONTAL)
         turn_status_label = wx.StaticText(main_panel, label="Turn status:")
         self._turn_status_text = wx.StaticText(main_panel, label=self._turn_status)
+        turn_details_label = wx.StaticText(main_panel, label="Turn details:")
+        self._turn_details_text = wx.StaticText(main_panel, label=self._turn_details)
         self._working_gauge = wx.Gauge(main_panel, range=100, size=(160, -1))
         self._working_gauge.SetValue(0)
         turn_status_sizer.Add(turn_status_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
@@ -168,6 +171,9 @@ class MainFrame(wx.Frame):
             border=8,
         )
         turn_status_sizer.Add(self._working_gauge, flag=wx.ALIGN_CENTER_VERTICAL)
+        turn_details_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        turn_details_sizer.Add(turn_details_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
+        turn_details_sizer.Add(self._turn_details_text, proportion=1, flag=wx.ALIGN_CENTER_VERTICAL)
 
         prompt_label = wx.StaticText(main_panel, label="Prompt:")
         self._input = wx.TextCtrl(
@@ -186,6 +192,7 @@ class MainFrame(wx.Frame):
         sizer.Add(transcript_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(self._transcript, proportion=8, flag=wx.EXPAND)
         sizer.Add(turn_status_sizer, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=4)
+        sizer.Add(turn_details_sizer, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(prompt_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
         sizer.Add(self._input, proportion=2, flag=wx.EXPAND | wx.ALL, border=4)
 
@@ -206,6 +213,8 @@ class MainFrame(wx.Frame):
         self.SetStatusText(self._turn_status, 2)  # Turn status
         if hasattr(self, "_turn_status_text"):
             self._turn_status_text.SetLabel(self._turn_status)
+        if hasattr(self, "_turn_details_text"):
+            self._turn_details_text.SetLabel(self._turn_details)
 
     def _update_title(self) -> None:
         """Update window title with working directory."""
@@ -457,6 +466,11 @@ class MainFrame(wx.Frame):
         if status == "Idle" and self._working_started_at is not None:
             return
         self._turn_status = status
+        wx.CallAfter(self._update_status_bar)
+
+    def set_turn_details(self, details: str) -> None:
+        """Update the visible non-transcript turn metadata."""
+        self._turn_details = details
         wx.CallAfter(self._update_status_bar)
 
     def start_working_status(self) -> None:

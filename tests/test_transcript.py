@@ -4,6 +4,7 @@ from wxpi.preferences import TranscriptPreferences
 from wxpi.transcript import (
     format_assistant_prefix,
     format_file_summary,
+    format_turn_details,
     format_user_prompt,
     should_show_event,
 )
@@ -15,6 +16,17 @@ def test_format_file_summary_reports_only_changed_counts():
 
 def test_format_file_summary_handles_no_changes():
     assert format_file_summary() == "No file changes."
+
+
+def test_format_turn_details_reports_model_and_effort():
+    assert (
+        format_turn_details("gpt-5.5", "low")
+        == "Current turn: model gpt-5.5, reasoning effort low"
+    )
+    assert (
+        format_turn_details("gpt-5.5", "low", state="Last turn")
+        == "Last turn: model gpt-5.5, reasoning effort low"
+    )
 
 
 def test_minimal_transcript_hides_process_noise():

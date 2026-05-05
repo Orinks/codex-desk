@@ -20,6 +20,7 @@ Implemented:
 - Deterministic fake Codex app-server tests, so bridge behavior is tested without live Codex.
 - wxPython shell with transcript, prompt input, menus, status bar, and approval dialog plumbing.
 - Desktop-style turn status that starts immediately on submit and reports elapsed working time.
+- Visible turn details showing the model and reasoning effort used for the current or last turn.
 - Native settings for Codex personality and transcript verbosity.
 - New session options for model, reasoning effort, sandbox, approval policy, local workspace, and
   Git worktree-backed sessions.

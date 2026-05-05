@@ -5,6 +5,11 @@ from __future__ import annotations
 from wxpi.preferences import TranscriptPreferences
 
 
+def format_turn_details(model: str, reasoning_effort: str, state: str = "Current turn") -> str:
+    """Return concise turn metadata for non-transcript UI surfaces."""
+    return f"{state}: model {model}, reasoning effort {reasoning_effort}"
+
+
 def format_user_prompt(text: str, preferences: TranscriptPreferences) -> str:
     """Return the transcript text appended when the user sends a prompt."""
     if preferences.speaker_labels == "role":

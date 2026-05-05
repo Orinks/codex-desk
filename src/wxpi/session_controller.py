@@ -24,6 +24,7 @@ from wxpi.rpc_events import (
 from wxpi.transcript import (
     format_assistant_prefix,
     format_file_summary,
+    format_turn_details,
     format_user_prompt,
     should_show_event,
 )
@@ -43,6 +44,7 @@ class SessionController:
         self._current_tool: Optional[str] = None  # Track current tool for block rendering
         self._preferences = AppPreferences()
         self._thread_options = ThreadOptions()
+        self._active_turn_options: ThreadOptions | None = None
 
     def set_preferences(self, preferences: AppPreferences) -> None:
         """Apply transcript preferences for future bridge events."""
@@ -98,6 +100,13 @@ class SessionController:
     def send_prompt(self, text: str) -> None:
         """Send a prompt to Codex."""
         if self._bridge:
+            self._active_turn_options = self._thread_options
+            self._main_frame.set_turn_details(
+                format_turn_details(
+                    self._active_turn_options.model,
+                    self._active_turn_options.reasoning_effort,
+                )
+            )
             self._main_frame.start_working_status()
             self._main_frame.append_transcript(format_user_prompt(text, self._preferences.transcript))
             self._bridge.send_prompt(text)
@@ -175,6 +184,15 @@ class SessionController:
     def _on_turn_end(self, event: TurnEndEvent) -> None:
         """Handle turn_end event."""
         self._main_frame.append_transcript("\n\n")
+        if self._active_turn_options:
+            self._main_frame.set_turn_details(
+                format_turn_details(
+                    self._active_turn_options.model,
+                    self._active_turn_options.reasoning_effort,
+                    state="Last turn",
+                )
+            )
+            self._active_turn_options = None
         self._main_frame.stop_working_status("Idle")
 
     def _on_message_update(self, event: MessageUpdateEvent) -> None:
