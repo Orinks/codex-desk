@@ -17,6 +17,8 @@ from wxpi.rpc_events import (
     ToolExecutionEndEvent,
     ConfirmEvent,
     AgentEndEvent,
+    FileChangeSummaryEvent,
+    ReasoningUpdateEvent,
 )
 
 
@@ -97,6 +99,22 @@ def test_parse_agent_end():
     raw = {"type": "agent_end"}
     event = parse_event(raw)
     assert isinstance(event, AgentEndEvent)
+
+
+def test_parse_reasoning_update():
+    raw = {"type": "reasoning_update", "delta": "Inspecting project files."}
+    event = parse_event(raw)
+    assert isinstance(event, ReasoningUpdateEvent)
+    assert event.delta == "Inspecting project files."
+
+
+def test_parse_file_change_summary():
+    raw = {"type": "file_change_summary", "created": 1, "edited": 2, "deleted": 0}
+    event = parse_event(raw)
+    assert isinstance(event, FileChangeSummaryEvent)
+    assert event.created == 1
+    assert event.edited == 2
+    assert event.deleted == 0
 
 
 def test_parse_unknown_returns_dict():

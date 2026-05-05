@@ -15,6 +15,7 @@ import threading
 from typing import Callable
 
 from wxpi.constants import CODEX_BINARY
+from wxpi.preferences import AppPreferences, ThreadOptions
 
 CODEX_APP_SERVER_ARGS: list[str] = [
     CODEX_BINARY,
@@ -51,11 +52,23 @@ class CodexAppServerBridge:
         self._thread_start_request_id: int | None = None
         self._thread_id: str | None = None
         self._thread_ready = threading.Event()
+        self._preferences = AppPreferences()
+        self._thread_options = ThreadOptions(model=model)
 
-    def start(self, cwd: str, session_path: str | None = None, continue_session: bool = False) -> None:
+    def start(
+        self,
+        cwd: str,
+        session_path: str | None = None,
+        continue_session: bool = False,
+        preferences: AppPreferences | None = None,
+        thread_options: ThreadOptions | None = None,
+    ) -> None:
         """Start Codex app-server and open a thread for the selected workspace."""
         if session_path or continue_session:
             raise NotImplementedError("Codex thread resume is not wired into wxAgent yet")
+        self._preferences = preferences or AppPreferences()
+        self._thread_options = thread_options or ThreadOptions(model=self._model)
+        self._model = self._thread_options.model
 
         self._proc = subprocess.Popen(
             list(CODEX_APP_SERVER_ARGS),
@@ -91,7 +104,17 @@ class CodexAppServerBridge:
             },
         )
         self._send_notification("initialized", {})
-        self._thread_start_request_id = self._send_request("thread/start", {"model": self._model})
+        self._thread_start_request_id = self._send_request(
+            "thread/start",
+            {
+                "cwd": cwd,
+                "model": self._thread_options.model,
+                "personality": self._preferences.personality,
+                "sandbox": self._thread_options.sandbox,
+                "approvalPolicy": self._thread_options.approval_policy,
+                "sessionStartSource": "startup",
+            },
+        )
 
         if not self._thread_ready.wait(timeout=5.0):
             self.stop()
@@ -106,6 +129,7 @@ class CodexAppServerBridge:
             {
                 "threadId": self._thread_id,
                 "input": [{"type": "text", "text": text}],
+                "effort": self._thread_options.reasoning_effort,
             },
         )
 
@@ -195,6 +219,12 @@ class CodexAppServerBridge:
             text = _extract_item_text(item)
             if item.get("type") in {"agent_message", "agentMessage"} and text:
                 self._dispatch({"type": "message_update", "delta": text})
+            reasoning = _extract_reasoning_text(item)
+            if reasoning:
+                self._dispatch({"type": "reasoning_update", "delta": reasoning})
+            file_summary = _summarize_file_changes(item)
+            if any(file_summary.values()):
+                self._dispatch({"type": "file_change_summary", **file_summary})
 
     def _dispatch(self, event: dict) -> None:
         for callback in self._callbacks:
@@ -215,6 +245,42 @@ def _extract_item_text(item: dict) -> str:
         return "".join(parts)
 
     return ""
+
+
+def _extract_reasoning_text(item: dict) -> str:
+    if item.get("type") not in {"reasoning", "reasoningSummary", "reasoning_summary"}:
+        return ""
+    return _extract_item_text(item)
+
+
+def _summarize_file_changes(item: dict) -> dict[str, int]:
+    created = _coerce_count(item, "created")
+    edited = _coerce_count(item, "edited")
+    deleted = _coerce_count(item, "deleted")
+
+    changes = item.get("changes")
+    if isinstance(changes, list):
+        for change in changes:
+            if not isinstance(change, dict):
+                continue
+            kind = str(change.get("kind") or change.get("type") or change.get("action") or "").lower()
+            if kind in {"create", "created", "add", "added", "new"}:
+                created += 1
+            elif kind in {"edit", "edited", "modify", "modified", "update", "updated", "write"}:
+                edited += 1
+            elif kind in {"delete", "deleted", "remove", "removed"}:
+                deleted += 1
+
+    return {"created": created, "edited": edited, "deleted": deleted}
+
+
+def _coerce_count(item: dict, key: str) -> int:
+    value = item.get(key, 0)
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return max(value, 0)
+    return 0
 
 
 def _classify_stderr_line(line: str) -> dict | None:

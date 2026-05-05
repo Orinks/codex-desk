@@ -17,6 +17,9 @@ The active UI path uses `CodexAppServerBridge` through `SessionController`.
 - Added failing tests for optional profile discovery.
 - Added stderr diagnostic classification so known non-fatal Codex plugin/analytics `403` warnings
   stay out of the transcript while unexpected startup errors remain visible.
+- Added preference tests and native settings for Codex personality plus transcript verbosity.
+- Added worktree tests and helpers for branch-based detached Git workspaces.
+- Added bridge tests for session options and concise file-change summaries.
 - Implemented bridge/profile code until tests passed.
 - Kept the old bridge regression tests passing.
 
@@ -30,5 +33,7 @@ uv run pytest
 
 - Codex app-server protocol coverage is still narrow.
 - Thread resume and session browsing are not implemented.
+- File-change summaries use defensive normalization and need live app-server event hardening once
+  Codex exposes the exact item shape across more tool paths.
 - Profile install commands for Obra and Compound Engineering are placeholders until verified.
 - GUI accessibility still needs live NVDA verification.

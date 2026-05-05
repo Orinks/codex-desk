@@ -6,18 +6,22 @@ import wx
 
 from wxpi.approval_dialog import ToolApprovalDialog
 from wxpi.codex_app_server_bridge import CodexAppServerBridge
+from wxpi.preferences import AppPreferences, ThreadOptions
 from wxpi.rpc_events import (
     AgentEndEvent,
     AgentStartEvent,
     ConfirmEvent,
     DiagnosticEvent,
+    FileChangeSummaryEvent,
     MessageUpdateEvent,
     parse_event,
+    ReasoningUpdateEvent,
     ToolExecutionEndEvent,
     ToolExecutionStartEvent,
     TurnEndEvent,
     TurnStartEvent,
 )
+from wxpi.transcript import format_file_summary, should_show_event
 
 
 class SessionController:
@@ -32,15 +36,32 @@ class SessionController:
         self._bridge: Optional[CodexAppServerBridge] = None
         self._allow_list: set[str] = set()  # Per-session allow-list for tools
         self._current_tool: Optional[str] = None  # Track current tool for block rendering
+        self._preferences = AppPreferences()
+        self._thread_options = ThreadOptions()
 
-    def new_session(self, cwd: str) -> None:
+    def set_preferences(self, preferences: AppPreferences) -> None:
+        """Apply transcript preferences for future bridge events."""
+        self._preferences = preferences
+
+    def new_session(
+        self,
+        cwd: str,
+        preferences: AppPreferences | None = None,
+        thread_options: ThreadOptions | None = None,
+    ) -> None:
         """Start a new session in the given working directory."""
         self._stop_bridge()
         self._allow_list.clear()
+        self._preferences = preferences or self._preferences
+        self._thread_options = thread_options or self._thread_options
         self._bridge = CodexAppServerBridge()
         self._bridge.on_event(self._on_event)
         self._bridge.on_process_exit(self._on_process_exit)
-        self._bridge.start(cwd=cwd)
+        self._bridge.start(
+            cwd=cwd,
+            preferences=self._preferences,
+            thread_options=self._thread_options,
+        )
         self._main_frame.set_turn_status("Idle")
 
     def continue_session(self, session_path: str) -> None:
@@ -51,7 +72,13 @@ class SessionController:
         self._bridge = CodexAppServerBridge()
         self._bridge.on_event(self._on_event)
         self._bridge.on_process_exit(self._on_process_exit)
-        self._bridge.start(cwd=cwd, session_path=session_path, continue_session=True)
+        self._bridge.start(
+            cwd=cwd,
+            session_path=session_path,
+            continue_session=True,
+            preferences=self._preferences,
+            thread_options=self._thread_options,
+        )
 
     def send_prompt(self, text: str) -> None:
         """Send a prompt to Codex."""
@@ -77,6 +104,9 @@ class SessionController:
 
     def _on_event(self, raw_event: dict) -> None:
         """Handle an incoming Codex event from the background thread."""
+        if not should_show_event(raw_event.get("type", ""), self._preferences.transcript):
+            return
+
         event = parse_event(raw_event)
 
         # Dispatch to the appropriate handler via CallAfter for thread safety
@@ -90,6 +120,10 @@ class SessionController:
             wx.CallAfter(self._on_turn_end, event)
         elif isinstance(event, MessageUpdateEvent):
             wx.CallAfter(self._on_message_update, event)
+        elif isinstance(event, ReasoningUpdateEvent):
+            wx.CallAfter(self._on_reasoning_update, event)
+        elif isinstance(event, FileChangeSummaryEvent):
+            wx.CallAfter(self._on_file_change_summary, event)
         elif isinstance(event, ToolExecutionStartEvent):
             wx.CallAfter(self._on_tool_execution_start, event)
         elif isinstance(event, ToolExecutionEndEvent):
@@ -115,12 +149,10 @@ class SessionController:
         """Handle agent_start event."""
         self._main_frame.set_model(event.model)
         self._main_frame.set_turn_status("Thinking...")
-        self._main_frame.append_transcript(f"\n[Agent started: {event.model}]\n")
 
     def _on_agent_end(self, event: AgentEndEvent) -> None:
         """Handle agent_end event."""
         self._main_frame.set_turn_status("Idle")
-        self._main_frame.append_transcript("\n[Agent finished]\n")
         self._main_frame.get_input_focus()
 
     def _on_turn_start(self, event: TurnStartEvent) -> None:
@@ -134,6 +166,19 @@ class SessionController:
     def _on_message_update(self, event: MessageUpdateEvent) -> None:
         """Handle message_update event (streaming text)."""
         self._main_frame.append_transcript(event.delta)
+
+    def _on_reasoning_update(self, event: ReasoningUpdateEvent) -> None:
+        """Handle optional reasoning transcript text."""
+        self._main_frame.append_transcript(f"\n[Reasoning: {event.delta}]\n")
+
+    def _on_file_change_summary(self, event: FileChangeSummaryEvent) -> None:
+        """Handle concise file change summaries."""
+        summary = format_file_summary(
+            created=event.created,
+            edited=event.edited,
+            deleted=event.deleted,
+        )
+        self._main_frame.append_transcript(f"\n{summary}\n")
 
     def _on_diagnostic(self, event: DiagnosticEvent) -> None:
         """Handle bridge diagnostics without surfacing expected Codex noise."""

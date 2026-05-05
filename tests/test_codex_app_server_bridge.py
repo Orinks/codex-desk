@@ -9,7 +9,9 @@ from wxpi.codex_app_server_bridge import (
     CODEX_APP_SERVER_ARGS,
     CodexAppServerBridge,
     _classify_stderr_line,
+    _summarize_file_changes,
 )
+from wxpi.preferences import AppPreferences, ThreadOptions
 
 
 FAKE_CODEX = [sys.executable, str(Path(__file__).with_name("fake_codex_app_server.py"))]
@@ -26,7 +28,15 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
     bridge.on_event(events.append)
     bridge.on_process_exit(exit_called.set)
 
-    bridge.start(cwd=str(tmp_path))
+    preferences = AppPreferences(personality="pragmatic")
+    thread_options = ThreadOptions(
+        model="gpt-5.5",
+        reasoning_effort="high",
+        sandbox="read-only",
+        approval_policy="never",
+    )
+
+    bridge.start(cwd=str(tmp_path), preferences=preferences, thread_options=thread_options)
     bridge.send_prompt("hello")
 
     assert exit_called.wait(timeout=3.0), "fake Codex app-server never exited"
@@ -46,9 +56,17 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
         "turn/start",
     ]
     assert messages[0]["params"]["clientInfo"]["name"] == "wxagent-test"
-    assert messages[2]["params"]["model"] == "gpt-5.4"
+    assert messages[2]["params"] == {
+        "cwd": str(tmp_path),
+        "model": "gpt-5.5",
+        "personality": "pragmatic",
+        "sandbox": "read-only",
+        "approvalPolicy": "never",
+        "sessionStartSource": "startup",
+    }
     assert messages[3]["params"]["threadId"] == "thr_test"
     assert messages[3]["params"]["input"] == [{"type": "text", "text": "hello"}]
+    assert messages[3]["params"]["effort"] == "high"
 
 
 def test_send_prompt_requires_running_thread(tmp_path):
@@ -93,3 +111,16 @@ def test_unexpected_stderr_stays_visible():
         "severity": "warning",
         "message": "error: app-server failed to start",
     }
+
+
+def test_summarize_file_changes_from_codex_item():
+    assert _summarize_file_changes(
+        {
+            "changes": [
+                {"kind": "create"},
+                {"kind": "edit"},
+                {"kind": "modify"},
+                {"kind": "delete"},
+            ]
+        }
+    ) == {"created": 1, "edited": 2, "deleted": 1}

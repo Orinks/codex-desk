@@ -34,6 +34,14 @@ The bridge currently normalizes supported app-server messages into these interna
 - `turn_start`
 - `message_update`
 - `turn_end`
+- `diagnostic`
+- `reasoning_update`
+- `file_change_summary`
+
+`thread/start` is parameterized from native session controls: working directory, model,
+personality, sandbox mode, and approval policy. `turn/start` carries the selected reasoning effort.
+Cloud execution is not currently exposed because this app talks directly to the local Codex
+app-server process.
 
 Future Codex protocol work belongs inside `CodexAppServerBridge`, not in the wx widgets.
 
@@ -42,8 +50,23 @@ Future Codex protocol work belongs inside `CodexAppServerBridge`, not in the wx 
 - `app.py`: startup, Codex PATH check, first-run routing.
 - `main_frame.py`: transcript, prompt input, menus, status bar.
 - `session_controller.py`: bridge lifecycle and event dispatch through `wx.CallAfter`.
+- `new_session_dialog.py`: model, reasoning, sandbox, branch, and local/worktree session choices.
+- `settings_dialog.py`: global personality and transcript verbosity preferences.
 - `approval_dialog.py`: keyboard-first tool approval dialog.
 - `profile_dialog.py`: read-only profile discovery for optional workflow packs.
+
+## Transcript Policy
+
+The default transcript is intentionally minimal: what the user wrote, what the assistant said,
+warnings that may require attention, and a concise file summary when Codex reports file changes.
+Tool-call blocks and reasoning summaries are configurable in settings so power users can opt into
+more process detail without making the composer busy.
+
+## Workspaces
+
+New sessions can run in the selected folder directly or in a detached Git worktree created under
+`~/.codex/worktrees`. The branch picker defaults to the current branch when the selected folder is a
+Git repository.
 
 ## Accessibility Rules
 

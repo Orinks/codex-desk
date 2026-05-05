@@ -19,12 +19,16 @@ Implemented:
   warnings.
 - Deterministic fake Codex app-server tests, so bridge behavior is tested without live Codex.
 - wxPython shell with transcript, prompt input, menus, status bar, and approval dialog plumbing.
+- Native settings for Codex personality and transcript verbosity.
+- New session options for model, reasoning effort, sandbox, approval policy, local workspace, and
+  Git worktree-backed sessions.
 - First-run panel that can install `@openai/codex` with npm and point users to Codex sign-in.
 - Agent profile registry and a native profile dialog.
 
 Still early:
 
 - Codex resume/thread listing is not wired yet.
+- Cloud task execution is not exposed; wxAgent currently starts local Codex app-server threads only.
 - Tool approval mapping uses the app's internal normalized event contract and needs live Codex
   protocol hardening.
 - NVDA/manual accessibility testing still needs a documented pass.
@@ -65,6 +69,8 @@ stdio. The bridge normalizes Codex app-server messages into a small UI event con
 - `turn_end`
 - `confirm`
 - `diagnostic`
+- `reasoning_update`
+- `file_change_summary`
 - tool execution start/end events
 
 The wx UI only consumes this normalized contract, keeping Codex protocol details isolated in
@@ -74,6 +80,10 @@ wxAgent launches app-server with `analytics.enabled=false` so it does not inheri
 opt-ins from a user's main Codex profile. Known plugin marketplace and analytics `403` warnings
 from Codex stderr are treated as debug diagnostics because they do not block app-server auth,
 thread startup, or model execution. Unexpected stderr remains visible as a Codex warning.
+
+Personality is configured in `Edit -> Settings`, not in the composer. Transcript settings default
+to a quiet view: user prompts, assistant text, diagnostics, and concise file summaries such as
+`Created 1 file, edited 2 files.` Tool calls and reasoning summaries are opt-in.
 
 ## Test Strategy
 

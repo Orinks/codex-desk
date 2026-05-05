@@ -3,8 +3,12 @@ import os
 import wx
 
 from wxpi.constants import APP_NAME
+from wxpi.new_session_dialog import NewSessionDialog
+from wxpi.preferences import AppPreferences, ThreadOptions
 from wxpi.profile_dialog import ProfileDialog
 from wxpi.session_controller import SessionController
+from wxpi.settings_dialog import SettingsDialog
+from wxpi.worktrees import create_worktree
 
 
 class MainFrame(wx.Frame):
@@ -22,6 +26,8 @@ class MainFrame(wx.Frame):
         self._cwd = os.getcwd()
         self._model = ""
         self._turn_status = "Idle"
+        self._preferences = AppPreferences()
+        self._thread_options = ThreadOptions()
 
         # Create the session controller (owns PiBridge)
         self._session_controller = SessionController(self)
@@ -70,6 +76,10 @@ class MainFrame(wx.Frame):
         profiles_item = wx.MenuItem(edit_menu, wx.ID_ANY, "Agent Profiles...\tCtrl+P")
         edit_menu.Append(profiles_item)
         self.Bind(wx.EVT_MENU, self._on_manage_profiles, profiles_item)
+
+        settings_item = wx.MenuItem(edit_menu, wx.ID_PREFERENCES, "Settings...\tCtrl+,")
+        edit_menu.Append(settings_item)
+        self.Bind(wx.EVT_MENU, self._on_settings, settings_item)
 
         # Help menu
         help_menu = wx.Menu()
@@ -172,16 +182,12 @@ class MainFrame(wx.Frame):
 
     def _on_new_session(self, event: wx.CommandEvent) -> None:
         """Start a new session."""
-        dlg = wx.DirDialog(
-            self,
-            "Choose a working directory for the new session:",
-            defaultPath=self._cwd,
-        )
-        if dlg.ShowModal() == wx.ID_OK:
-            self._cwd = dlg.GetPath()
-            self._update_title()
-            self._update_status_bar()
-            self._session_controller.new_session(self._cwd)
+        dlg = NewSessionDialog(self, self._cwd, self._thread_options)
+        try:
+            if dlg.ShowModal() == wx.ID_OK:
+                self._start_configured_session(dlg.get_cwd(), dlg.get_thread_options())
+        finally:
+            dlg.Destroy()
 
     def _on_open_session(self, event: wx.CommandEvent) -> None:
         """Open an existing session."""
@@ -203,17 +209,12 @@ class MainFrame(wx.Frame):
 
     def _on_change_workspace(self, event: wx.CommandEvent) -> None:
         """Change the working directory."""
-        dlg = wx.DirDialog(
-            self,
-            "Choose a working directory:",
-            defaultPath=self._cwd,
-        )
-        if dlg.ShowModal() == wx.ID_OK:
-            self._cwd = dlg.GetPath()
-            self._update_title()
-            self._update_status_bar()
-            # Start a new session in the new directory
-            self._session_controller.new_session(self._cwd)
+        dlg = NewSessionDialog(self, self._cwd, self._thread_options)
+        try:
+            if dlg.ShowModal() == wx.ID_OK:
+                self._start_configured_session(dlg.get_cwd(), dlg.get_thread_options())
+        finally:
+            dlg.Destroy()
 
     def _on_quit(self, event: wx.CommandEvent) -> None:
         """Quit the application."""
@@ -236,6 +237,16 @@ class MainFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
+    def _on_settings(self, event: wx.CommandEvent) -> None:
+        """Open app settings."""
+        dlg = SettingsDialog(self, self._preferences)
+        try:
+            if dlg.ShowModal() == wx.ID_OK:
+                self._preferences = dlg.get_preferences()
+                self._session_controller.set_preferences(self._preferences)
+        finally:
+            dlg.Destroy()
+
     def _on_about(self, event: wx.CommandEvent) -> None:
         """Show about dialog."""
         wx.MessageBox(
@@ -244,6 +255,31 @@ class MainFrame(wx.Frame):
             "Built with wxPython.",
             f"About {APP_NAME}",
             wx.OK | wx.ICON_INFORMATION,
+        )
+
+    def _start_configured_session(self, cwd: str, options: ThreadOptions) -> None:
+        """Start a local or worktree-backed Codex session."""
+        session_cwd = cwd
+        if options.mode == "worktree":
+            try:
+                worktree = create_worktree(cwd, options.base_branch or "HEAD")
+            except Exception as exc:
+                wx.MessageBox(
+                    f"Could not create Git worktree:\n\n{exc}",
+                    "New Session",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                return
+            session_cwd = str(worktree.path)
+
+        self._cwd = session_cwd
+        self._thread_options = options
+        self._update_title()
+        self._update_status_bar()
+        self._session_controller.new_session(
+            self._cwd,
+            preferences=self._preferences,
+            thread_options=self._thread_options,
         )
 
     # ------------------------------------------------------------------

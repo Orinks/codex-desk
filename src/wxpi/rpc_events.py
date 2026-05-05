@@ -23,6 +23,20 @@ class MessageUpdateEvent:
 
 
 @dataclass
+class ReasoningUpdateEvent:
+    type: str = "reasoning_update"
+    delta: str = ""
+
+
+@dataclass
+class FileChangeSummaryEvent:
+    type: str = "file_change_summary"
+    created: int = 0
+    edited: int = 0
+    deleted: int = 0
+
+
+@dataclass
 class TurnStartEvent:
     type: str = "turn_start"
     turn_id: str = ""
@@ -73,6 +87,8 @@ class DiagnosticEvent:
 _EVENT_MAP = {
     "agent_start": AgentStartEvent,
     "message_update": MessageUpdateEvent,
+    "reasoning_update": ReasoningUpdateEvent,
+    "file_change_summary": FileChangeSummaryEvent,
     "turn_start": TurnStartEvent,
     "turn_end": TurnEndEvent,
     "tool_execution_start": ToolExecutionStartEvent,
