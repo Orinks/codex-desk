@@ -15,6 +15,8 @@ Implemented:
 
 - UV-managed Python project.
 - Codex app-server bridge over JSONL/JSON-RPC.
+- Per-launch Codex analytics opt-out plus filtering for known non-fatal plugin/analytics 403
+  warnings.
 - Deterministic fake Codex app-server tests, so bridge behavior is tested without live Codex.
 - wxPython shell with transcript, prompt input, menus, status bar, and approval dialog plumbing.
 - First-run panel that can install `@openai/codex` with npm and point users to Codex sign-in.
@@ -62,10 +64,16 @@ stdio. The bridge normalizes Codex app-server messages into a small UI event con
 - `message_update`
 - `turn_end`
 - `confirm`
+- `diagnostic`
 - tool execution start/end events
 
 The wx UI only consumes this normalized contract, keeping Codex protocol details isolated in
 `src/wxpi/codex_app_server_bridge.py`.
+
+wxAgent launches app-server with `analytics.enabled=false` so it does not inherit analytics
+opt-ins from a user's main Codex profile. Known plugin marketplace and analytics `403` warnings
+from Codex stderr are treated as debug diagnostics because they do not block app-server auth,
+thread startup, or model execution. Unexpected stderr remains visible as a Codex warning.
 
 ## Test Strategy
 

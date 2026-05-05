@@ -15,6 +15,8 @@ The active UI path uses `CodexAppServerBridge` through `SessionController`.
 - Added failing tests for Codex app-server handshake and turn start.
 - Added fake Codex app-server process for deterministic JSONL tests.
 - Added failing tests for optional profile discovery.
+- Added stderr diagnostic classification so known non-fatal Codex plugin/analytics `403` warnings
+  stay out of the transcript while unexpected startup errors remain visible.
 - Implemented bridge/profile code until tests passed.
 - Kept the old bridge regression tests passing.
 

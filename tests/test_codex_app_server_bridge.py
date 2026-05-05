@@ -5,7 +5,11 @@ import sys
 import threading
 from pathlib import Path
 
-from wxpi.codex_app_server_bridge import CodexAppServerBridge
+from wxpi.codex_app_server_bridge import (
+    CODEX_APP_SERVER_ARGS,
+    CodexAppServerBridge,
+    _classify_stderr_line,
+)
 
 
 FAKE_CODEX = [sys.executable, str(Path(__file__).with_name("fake_codex_app_server.py"))]
@@ -56,3 +60,36 @@ def test_send_prompt_requires_running_thread(tmp_path):
         assert "start a Codex thread" in str(exc)
     else:
         raise AssertionError("send_prompt should fail before start()")
+
+
+def test_codex_app_server_launch_disables_noisy_analytics():
+    assert CODEX_APP_SERVER_ARGS[:2] == ["codex", "app-server"]
+    assert "-c" in CODEX_APP_SERVER_ARGS
+    assert "analytics.enabled=false" in CODEX_APP_SERVER_ARGS
+    assert "suppress_unstable_features_warning=true" in CODEX_APP_SERVER_ARGS
+
+
+def test_codex_403_plugin_and_analytics_warnings_are_debug_diagnostics():
+    plugin_warning = (
+        "WARN codex_core::plugins::startup_sync: remote plugin sync request to "
+        "https://chatgpt.com/backend-api/plugins/list failed with 403 Forbidden"
+    )
+    analytics_warning = (
+        "WARN codex_analytics::client: request to "
+        "https://chatgpt.com/backend-api/codex/analytics-events/events failed: 403 Forbidden"
+    )
+
+    assert _classify_stderr_line(plugin_warning) == {
+        "type": "diagnostic",
+        "severity": "debug",
+        "message": "Ignored non-fatal Codex plugin/analytics 403 warning.",
+    }
+    assert _classify_stderr_line(analytics_warning)["severity"] == "debug"
+
+
+def test_unexpected_stderr_stays_visible():
+    assert _classify_stderr_line("error: app-server failed to start") == {
+        "type": "diagnostic",
+        "severity": "warning",
+        "message": "error: app-server failed to start",
+    }

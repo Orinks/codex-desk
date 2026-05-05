@@ -63,6 +63,13 @@ class AgentEndEvent:
     type: str = "agent_end"
 
 
+@dataclass
+class DiagnosticEvent:
+    type: str = "diagnostic"
+    severity: str = "warning"
+    message: str = ""
+
+
 _EVENT_MAP = {
     "agent_start": AgentStartEvent,
     "message_update": MessageUpdateEvent,
@@ -72,6 +79,7 @@ _EVENT_MAP = {
     "tool_execution_end": ToolExecutionEndEvent,
     "confirm": ConfirmEvent,
     "agent_end": AgentEndEvent,
+    "diagnostic": DiagnosticEvent,
 }
 
 

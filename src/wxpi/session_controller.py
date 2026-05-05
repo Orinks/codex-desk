@@ -10,6 +10,7 @@ from wxpi.rpc_events import (
     AgentEndEvent,
     AgentStartEvent,
     ConfirmEvent,
+    DiagnosticEvent,
     MessageUpdateEvent,
     parse_event,
     ToolExecutionEndEvent,
@@ -95,6 +96,8 @@ class SessionController:
             wx.CallAfter(self._on_tool_execution_end, event)
         elif isinstance(event, ConfirmEvent):
             wx.CallAfter(self._on_confirm, event)
+        elif isinstance(event, DiagnosticEvent):
+            wx.CallAfter(self._on_diagnostic, event)
         else:
             # Unknown event type - log it but don't crash
             wx.CallAfter(self._main_frame.append_transcript, f"\n[Unknown event: {raw_event.get('type', '?')}]\n")
@@ -131,6 +134,12 @@ class SessionController:
     def _on_message_update(self, event: MessageUpdateEvent) -> None:
         """Handle message_update event (streaming text)."""
         self._main_frame.append_transcript(event.delta)
+
+    def _on_diagnostic(self, event: DiagnosticEvent) -> None:
+        """Handle bridge diagnostics without surfacing expected Codex noise."""
+        if event.severity == "debug":
+            return
+        self._main_frame.append_transcript(f"\n[Codex warning: {event.message}]\n")
 
     def _on_tool_execution_start(self, event: ToolExecutionStartEvent) -> None:
         """Handle tool_execution_start event."""

@@ -16,8 +16,24 @@ from typing import Callable
 
 from wxpi.constants import CODEX_BINARY
 
-CODEX_APP_SERVER_ARGS: list[str] = [CODEX_BINARY, "app-server"]
+CODEX_APP_SERVER_ARGS: list[str] = [
+    CODEX_BINARY,
+    "app-server",
+    "-c",
+    "analytics.enabled=false",
+    "-c",
+    "suppress_unstable_features_warning=true",
+]
 USE_SHELL = sys.platform == "win32"
+
+BENIGN_CODEX_WARNING_HINTS = (
+    "codex_core::plugins::startup_sync",
+    "codex_core::plugins::manager",
+    "codex_analytics::client",
+    "backend-api/plugins/list",
+    "backend-api/plugins/featured",
+    "backend-api/codex/analytics-events/events",
+)
 
 
 class CodexAppServerBridge:
@@ -28,6 +44,7 @@ class CodexAppServerBridge:
         self._model = model
         self._proc: subprocess.Popen[str] | None = None
         self._thread: threading.Thread | None = None
+        self._stderr_thread: threading.Thread | None = None
         self._callbacks: list[Callable[[dict], None]] = []
         self._exit_callbacks: list[Callable[[], None]] = []
         self._next_id = 0
@@ -56,6 +73,12 @@ class CodexAppServerBridge:
             name="codex-app-server-reader",
         )
         self._thread.start()
+        self._stderr_thread = threading.Thread(
+            target=self._read_stderr_loop,
+            daemon=True,
+            name="codex-app-server-stderr-reader",
+        )
+        self._stderr_thread.start()
 
         self._send_request(
             "initialize",
@@ -110,6 +133,7 @@ class CodexAppServerBridge:
                 self._proc.kill()
             self._proc = None
         self._thread = None
+        self._stderr_thread = None
 
     def _send_request(self, method: str, params: dict) -> int:
         request_id = self._next_id
@@ -139,6 +163,16 @@ class CodexAppServerBridge:
             self._handle_message(message)
         for callback in self._exit_callbacks:
             callback()
+
+    def _read_stderr_loop(self) -> None:
+        assert self._proc and self._proc.stderr
+        while True:
+            line = self._proc.stderr.readline()
+            if not line:
+                break
+            diagnostic = _classify_stderr_line(line)
+            if diagnostic:
+                self._dispatch(diagnostic)
 
     def _handle_message(self, message: dict) -> None:
         if message.get("id") == self._thread_start_request_id and "result" in message:
@@ -181,3 +215,18 @@ def _extract_item_text(item: dict) -> str:
         return "".join(parts)
 
     return ""
+
+
+def _classify_stderr_line(line: str) -> dict | None:
+    message = line.strip()
+    if not message:
+        return None
+
+    if any(hint in message for hint in BENIGN_CODEX_WARNING_HINTS) and "403" in message:
+        return {
+            "type": "diagnostic",
+            "severity": "debug",
+            "message": "Ignored non-fatal Codex plugin/analytics 403 warning.",
+        }
+
+    return {"type": "diagnostic", "severity": "warning", "message": message}
