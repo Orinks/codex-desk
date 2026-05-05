@@ -20,6 +20,7 @@ The active UI path uses `CodexAppServerBridge` through `SessionController`.
 - Added preference tests and native settings for Codex personality plus transcript verbosity.
 - Added worktree tests and helpers for branch-based detached Git workspaces.
 - Added bridge tests for session options and concise file-change summaries.
+- Added `codex mcp` service tests and a native MCP server manager dialog.
 - Implemented bridge/profile code until tests passed.
 - Kept the old bridge regression tests passing.
 
@@ -35,5 +36,7 @@ uv run pytest
 - Thread resume and session browsing are not implemented.
 - File-change summaries use defensive normalization and need live app-server event hardening once
   Codex exposes the exact item shape across more tool paths.
+- MCP list parsing follows the current CLI table output; a future Codex JSON list mode would be a
+  better long-term interface if it becomes available.
 - Profile install commands for Obra and Compound Engineering are placeholders until verified.
 - GUI accessibility still needs live NVDA verification.

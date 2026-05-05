@@ -52,6 +52,7 @@ Future Codex protocol work belongs inside `CodexAppServerBridge`, not in the wx 
 - `session_controller.py`: bridge lifecycle and event dispatch through `wx.CallAfter`.
 - `new_session_dialog.py`: model, reasoning, sandbox, branch, and local/worktree session choices.
 - `settings_dialog.py`: global personality and transcript verbosity preferences.
+- `mcp_manager_dialog.py`: native MCP server lifecycle management backed by `codex mcp`.
 - `approval_dialog.py`: keyboard-first tool approval dialog.
 - `profile_dialog.py`: read-only profile discovery for optional workflow packs.
 
@@ -67,6 +68,19 @@ more process detail without making the composer busy.
 New sessions can run in the selected folder directly or in a detached Git worktree created under
 `~/.codex/worktrees`. The branch picker defaults to the current branch when the selected folder is a
 Git repository.
+
+## MCP Servers
+
+wxAgent delegates MCP lifecycle operations to the Codex CLI:
+
+- `codex mcp list`
+- `codex mcp add`
+- `codex mcp remove`
+- `codex mcp login`
+- `codex mcp logout`
+
+This keeps wxAgent aligned with Codex auth and config behavior while still giving screen reader
+users a native control surface.
 
 ## Accessibility Rules
 

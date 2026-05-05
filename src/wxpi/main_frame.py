@@ -3,6 +3,7 @@ import os
 import wx
 
 from wxpi.constants import APP_NAME
+from wxpi.mcp_manager_dialog import McpManagerDialog
 from wxpi.new_session_dialog import NewSessionDialog
 from wxpi.preferences import AppPreferences, ThreadOptions
 from wxpi.profile_dialog import ProfileDialog
@@ -89,6 +90,12 @@ class MainFrame(wx.Frame):
 
         menubar.Append(file_menu, "File")
         menubar.Append(edit_menu, "Edit")
+        tools_menu = wx.Menu()
+        mcp_servers_item = wx.MenuItem(tools_menu, wx.ID_ANY, "MCP Servers...\tCtrl+M")
+        self._id_mcp_servers = mcp_servers_item.GetId()
+        tools_menu.Append(mcp_servers_item)
+        self.Bind(wx.EVT_MENU, self._on_mcp_servers, mcp_servers_item)
+        menubar.Append(tools_menu, "Tools")
         menubar.Append(help_menu, "Help")
 
         self.SetMenuBar(menubar)
@@ -159,6 +166,7 @@ class MainFrame(wx.Frame):
             (wx.ACCEL_CTRL, ord('N'), wx.ID_NEW),
             (wx.ACCEL_CTRL, ord('O'), wx.ID_OPEN),
             (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('O'), self._id_change_workspace),
+            (wx.ACCEL_CTRL, ord('M'), self._id_mcp_servers),
             (wx.ACCEL_CTRL, ord('Q'), wx.ID_EXIT),
             (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, self._id_abort),
         ])
@@ -234,6 +242,12 @@ class MainFrame(wx.Frame):
     def _on_manage_profiles(self, event: wx.CommandEvent) -> None:
         """Open profile management dialog."""
         dlg = ProfileDialog(self)
+        dlg.ShowModal()
+        dlg.Destroy()
+
+    def _on_mcp_servers(self, event: wx.CommandEvent) -> None:
+        """Open MCP server management dialog."""
+        dlg = McpManagerDialog(self)
         dlg.ShowModal()
         dlg.Destroy()
 

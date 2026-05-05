@@ -22,6 +22,8 @@ Implemented:
 - Native settings for Codex personality and transcript verbosity.
 - New session options for model, reasoning effort, sandbox, approval policy, local workspace, and
   Git worktree-backed sessions.
+- Native MCP server manager for listing, adding, removing, logging in, and logging out through
+  `codex mcp`.
 - First-run panel that can install `@openai/codex` with npm and point users to Codex sign-in.
 - Agent profile registry and a native profile dialog.
 
@@ -84,6 +86,9 @@ thread startup, or model execution. Unexpected stderr remains visible as a Codex
 Personality is configured in `Edit -> Settings`, not in the composer. Transcript settings default
 to a quiet view: user prompts, assistant text, diagnostics, and concise file summaries such as
 `Created 1 file, edited 2 files.` Tool calls and reasoning summaries are opt-in.
+
+MCP servers are managed from `Tools -> MCP Servers`. wxAgent shells out to the Codex CLI for the
+supported lifecycle commands rather than editing MCP entries by hand.
 
 ## Test Strategy
 
