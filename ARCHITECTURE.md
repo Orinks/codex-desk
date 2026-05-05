@@ -53,6 +53,8 @@ Future Codex protocol work belongs inside `CodexAppServerBridge`, not in the wx 
 - `new_session_dialog.py`: model, reasoning, sandbox, branch, and local/worktree session choices.
 - `settings_dialog.py`: global personality and transcript verbosity preferences.
 - `mcp_manager_dialog.py`: native MCP server lifecycle management backed by `codex mcp`.
+- `plugin_manager_dialog.py`: native plugin and marketplace management backed by Codex config and
+  `codex plugin marketplace`.
 - `approval_dialog.py`: keyboard-first tool approval dialog.
 - `profile_dialog.py`: read-only profile discovery for optional workflow packs.
 
@@ -81,6 +83,19 @@ wxAgent delegates MCP lifecycle operations to the Codex CLI:
 
 This keeps wxAgent aligned with Codex auth and config behavior while still giving screen reader
 users a native control surface.
+
+## Plugins
+
+wxAgent reads configured plugin marketplaces and plugin enabled state from `~/.codex/config.toml`.
+Marketplace add, upgrade, and remove operations delegate to:
+
+- `codex plugin marketplace add`
+- `codex plugin marketplace upgrade`
+- `codex plugin marketplace remove`
+
+Plugin enable/disable updates `[plugins."<plugin-id>"].enabled` directly through
+`CodexConfigService`, which creates a backup and writes atomically. This direct edit is intentionally
+limited to the one setting that Codex CLI does not currently expose as its own command.
 
 ## Accessibility Rules
 

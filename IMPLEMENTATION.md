@@ -21,6 +21,7 @@ The active UI path uses `CodexAppServerBridge` through `SessionController`.
 - Added worktree tests and helpers for branch-based detached Git workspaces.
 - Added bridge tests for session options and concise file-change summaries.
 - Added `codex mcp` service tests and a native MCP server manager dialog.
+- Added `codex plugin marketplace` service tests and a native Codex plugin manager dialog.
 - Implemented bridge/profile code until tests passed.
 - Kept the old bridge regression tests passing.
 
@@ -38,5 +39,7 @@ uv run pytest
   Codex exposes the exact item shape across more tool paths.
 - MCP list parsing follows the current CLI table output; a future Codex JSON list mode would be a
   better long-term interface if it becomes available.
+- Plugin enable/disable is direct config editing because Codex exposes marketplace lifecycle
+  commands but not a dedicated plugin toggle command.
 - Profile install commands for Obra and Compound Engineering are placeholders until verified.
 - GUI accessibility still needs live NVDA verification.

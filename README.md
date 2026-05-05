@@ -24,6 +24,7 @@ Implemented:
   Git worktree-backed sessions.
 - Native MCP server manager for listing, adding, removing, logging in, and logging out through
   `codex mcp`.
+- Native Codex plugin manager for marketplace add/upgrade/remove and plugin enable/disable.
 - First-run panel that can install `@openai/codex` with npm and point users to Codex sign-in.
 - Agent profile registry and a native profile dialog.
 
@@ -89,6 +90,11 @@ to a quiet view: user prompts, assistant text, diagnostics, and concise file sum
 
 MCP servers are managed from `Tools -> MCP Servers`. wxAgent shells out to the Codex CLI for the
 supported lifecycle commands rather than editing MCP entries by hand.
+
+Codex plugins are managed from `Tools -> Codex Plugins`. Marketplace lifecycle operations use
+`codex plugin marketplace`; plugin enable/disable toggles update the user's Codex config with a
+backup because the current CLI exposes marketplace commands but not a dedicated plugin toggle
+command.
 
 ## Test Strategy
 
