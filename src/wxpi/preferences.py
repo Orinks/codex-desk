@@ -11,16 +11,22 @@ SANDBOX_MODES = ("read-only", "workspace-write", "danger-full-access")
 APPROVAL_POLICIES = ("untrusted", "on-request", "never")
 APPROVAL_REVIEWERS = ("user", "auto_review")
 THREAD_MODES = ("local", "worktree")
+SPEAKER_LABEL_MODES = ("none", "role")
 
 
 @dataclass(frozen=True)
 class TranscriptPreferences:
     """Controls how much Codex process detail appears in the transcript."""
 
+    speaker_labels: str = "none"
     show_tool_calls: bool = False
     show_reasoning: bool = False
     show_diagnostics: bool = False
     show_file_summaries: bool = True
+
+    def __post_init__(self) -> None:
+        if self.speaker_labels not in SPEAKER_LABEL_MODES:
+            raise ValueError(f"unknown speaker label mode: {self.speaker_labels}")
 
 
 @dataclass(frozen=True)

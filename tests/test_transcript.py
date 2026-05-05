@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from wxpi.preferences import TranscriptPreferences
-from wxpi.transcript import format_file_summary, should_show_event
+from wxpi.transcript import (
+    format_assistant_prefix,
+    format_file_summary,
+    format_user_prompt,
+    should_show_event,
+)
 
 
 def test_format_file_summary_reports_only_changed_counts():
@@ -21,6 +26,20 @@ def test_minimal_transcript_hides_process_noise():
     assert not should_show_event("diagnostic", preferences)
     assert should_show_event("message_update", preferences)
     assert should_show_event("file_change_summary", preferences)
+
+
+def test_minimal_transcript_omits_speaker_prefixes():
+    preferences = TranscriptPreferences()
+
+    assert format_user_prompt("Hello", preferences) == "\nHello\n\n"
+    assert format_assistant_prefix(preferences) == "\n"
+
+
+def test_role_speaker_labels_are_available():
+    preferences = TranscriptPreferences(speaker_labels="role")
+
+    assert format_user_prompt("Hello", preferences) == "\nYou: Hello\n\n"
+    assert format_assistant_prefix(preferences) == "\nAssistant: "
 
 
 def test_transcript_preferences_can_show_tool_and_reasoning_detail():

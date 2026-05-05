@@ -21,7 +21,7 @@ from wxpi.rpc_events import (
     TurnEndEvent,
     TurnStartEvent,
 )
-from wxpi.transcript import format_file_summary, should_show_event
+from wxpi.transcript import format_assistant_prefix, format_file_summary, format_user_prompt, should_show_event
 
 
 class SessionController:
@@ -94,7 +94,7 @@ class SessionController:
         """Send a prompt to Codex."""
         if self._bridge:
             self._main_frame.set_turn_status("Thinking...")
-            self._main_frame.append_transcript(f"\nYou: {text}\n\n")
+            self._main_frame.append_transcript(format_user_prompt(text, self._preferences.transcript))
             self._bridge.send_prompt(text)
 
     def send_abort(self) -> None:
@@ -167,7 +167,7 @@ class SessionController:
 
     def _on_turn_start(self, event: TurnStartEvent) -> None:
         """Handle turn_start event."""
-        self._main_frame.append_transcript("\nAssistant: ")
+        self._main_frame.append_transcript(format_assistant_prefix(self._preferences.transcript))
 
     def _on_turn_end(self, event: TurnEndEvent) -> None:
         """Handle turn_end event."""

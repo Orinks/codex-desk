@@ -87,8 +87,9 @@ from Codex stderr are treated as debug diagnostics because they do not block app
 thread startup, or model execution. Unexpected stderr remains visible as a Codex warning.
 
 Personality is configured in `Edit -> Settings`, not in the composer. Transcript settings default
-to a quiet view: user prompts, assistant text, and concise file summaries such as
-`Created 1 file, edited 2 files.` Tool calls and reasoning summaries are opt-in.
+to a quiet view without speaker prefixes: user prompts, assistant text, and concise file summaries
+such as `Created 1 file, edited 2 files.` `You` / `Assistant` speaker labels, tool calls, and
+reasoning summaries are opt-in.
 Codex diagnostics are also opt-in because app-server can emit noisy non-fatal plugin and shell
 setup messages that are not useful in the main conversation transcript.
 

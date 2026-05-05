@@ -10,6 +10,7 @@ def test_default_preferences_keep_transcript_minimal():
 
     assert prefs.personality == "none"
     assert prefs.transcript == TranscriptPreferences(
+        speaker_labels="none",
         show_tool_calls=False,
         show_reasoning=False,
         show_diagnostics=False,
@@ -36,6 +37,11 @@ def test_thread_options_validate_known_values():
 def test_unknown_personality_is_rejected():
     with pytest.raises(ValueError, match="unknown personality"):
         AppPreferences(personality="chatty")
+
+
+def test_unknown_speaker_label_mode_is_rejected():
+    with pytest.raises(ValueError, match="unknown speaker label mode"):
+        TranscriptPreferences(speaker_labels="verbose")
 
 
 def test_unknown_thread_mode_is_rejected():

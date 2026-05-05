@@ -26,6 +26,7 @@ Test with keyboard first, then NVDA Speech Viewer or Narrator.
 
 - `Edit -> Settings` exposes personality and transcript options with visible labels or checkbox
   labels.
+- The speaker labels combo box is labeled "Speaker labels" and defaults to "No speaker labels".
 - Tool-call and reasoning transcript detail are opt-in.
 
 ## Tools Dialogs

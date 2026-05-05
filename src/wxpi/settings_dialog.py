@@ -4,7 +4,18 @@ from __future__ import annotations
 
 import wx
 
-from wxpi.preferences import AppPreferences, PERSONALITIES, TranscriptPreferences
+from wxpi.preferences import (
+    AppPreferences,
+    PERSONALITIES,
+    SPEAKER_LABEL_MODES,
+    TranscriptPreferences,
+)
+
+
+SPEAKER_LABEL_DISPLAY = {
+    "none": "No speaker labels",
+    "role": "You / Assistant",
+}
 
 
 class SettingsDialog(wx.Dialog):
@@ -23,6 +34,9 @@ class SettingsDialog(wx.Dialog):
         return AppPreferences(
             personality=self._personality_choice.GetStringSelection(),
             transcript=TranscriptPreferences(
+                speaker_labels=self._speaker_labels_choice.GetClientData(
+                    self._speaker_labels_choice.GetSelection()
+                ),
                 show_tool_calls=self._show_tool_calls.GetValue(),
                 show_reasoning=self._show_reasoning.GetValue(),
                 show_diagnostics=self._show_diagnostics.GetValue(),
@@ -39,10 +53,16 @@ class SettingsDialog(wx.Dialog):
 
         transcript_box = wx.StaticBox(panel, label="Transcript")
         transcript_sizer = wx.StaticBoxSizer(transcript_box, wx.VERTICAL)
+        speaker_labels_label = wx.StaticText(panel, label="Speaker labels:")
+        self._speaker_labels_choice = wx.Choice(panel)
+        for label_mode in SPEAKER_LABEL_MODES:
+            self._speaker_labels_choice.Append(SPEAKER_LABEL_DISPLAY[label_mode], label_mode)
         self._show_tool_calls = wx.CheckBox(panel, label="Show tool calls")
         self._show_reasoning = wx.CheckBox(panel, label="Show reasoning summaries")
         self._show_diagnostics = wx.CheckBox(panel, label="Show Codex diagnostics")
         self._show_file_summaries = wx.CheckBox(panel, label="Show concise file summaries")
+        transcript_sizer.Add(speaker_labels_label, flag=wx.LEFT | wx.RIGHT | wx.TOP, border=4)
+        transcript_sizer.Add(self._speaker_labels_choice, flag=wx.EXPAND | wx.ALL, border=4)
         transcript_sizer.Add(self._show_tool_calls, flag=wx.ALL, border=4)
         transcript_sizer.Add(self._show_reasoning, flag=wx.ALL, border=4)
         transcript_sizer.Add(self._show_diagnostics, flag=wx.ALL, border=4)
@@ -59,6 +79,9 @@ class SettingsDialog(wx.Dialog):
 
     def _populate(self, preferences: AppPreferences) -> None:
         self._personality_choice.SetStringSelection(preferences.personality)
+        self._speaker_labels_choice.SetStringSelection(
+            SPEAKER_LABEL_DISPLAY[preferences.transcript.speaker_labels]
+        )
         self._show_tool_calls.SetValue(preferences.transcript.show_tool_calls)
         self._show_reasoning.SetValue(preferences.transcript.show_reasoning)
         self._show_diagnostics.SetValue(preferences.transcript.show_diagnostics)

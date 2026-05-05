@@ -5,6 +5,20 @@ from __future__ import annotations
 from wxpi.preferences import TranscriptPreferences
 
 
+def format_user_prompt(text: str, preferences: TranscriptPreferences) -> str:
+    """Return the transcript text appended when the user sends a prompt."""
+    if preferences.speaker_labels == "role":
+        return f"\nYou: {text}\n\n"
+    return f"\n{text}\n\n"
+
+
+def format_assistant_prefix(preferences: TranscriptPreferences) -> str:
+    """Return the transcript text appended when Codex starts answering."""
+    if preferences.speaker_labels == "role":
+        return "\nAssistant: "
+    return "\n"
+
+
 def format_file_summary(created: int = 0, edited: int = 0, deleted: int = 0) -> str:
     """Return a concise human-readable file change summary."""
     parts = []
