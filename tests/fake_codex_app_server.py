@@ -53,7 +53,12 @@ def main() -> None:
     emit(
         {
             "method": "item/completed",
-            "params": {"item": {"type": "agent_message", "text": "Hello from Codex"}},
+            "params": {
+                "item": {
+                    "type": "agentMessage",
+                    "content": [{"type": "text", "text": "Hello from Codex"}],
+                }
+            },
         }
     )
     emit({"method": "turn/completed", "params": {"turn": {"id": "turn_test"}}})

@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import threading
 from typing import Callable
 
 from wxpi.constants import CODEX_BINARY
 
 CODEX_APP_SERVER_ARGS: list[str] = [CODEX_BINARY, "app-server"]
+USE_SHELL = sys.platform == "win32"
 
 
 class CodexAppServerBridge:
@@ -44,6 +46,7 @@ class CodexAppServerBridge:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd,
+            shell=USE_SHELL,
             text=True,
             encoding="utf-8",
         )
@@ -155,10 +158,26 @@ class CodexAppServerBridge:
             self._dispatch({"type": "turn_end", "turn_id": turn_id})
         elif method == "item/completed":
             item = params.get("item", {})
-            text = item.get("text") or item.get("message") or ""
-            if item.get("type") == "agent_message" and text:
+            text = _extract_item_text(item)
+            if item.get("type") in {"agent_message", "agentMessage"} and text:
                 self._dispatch({"type": "message_update", "delta": text})
 
     def _dispatch(self, event: dict) -> None:
         for callback in self._callbacks:
             callback(event)
+
+
+def _extract_item_text(item: dict) -> str:
+    text = item.get("text") or item.get("message")
+    if text:
+        return str(text)
+
+    content = item.get("content")
+    if isinstance(content, list):
+        parts = []
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                parts.append(str(part.get("text", "")))
+        return "".join(parts)
+
+    return ""
