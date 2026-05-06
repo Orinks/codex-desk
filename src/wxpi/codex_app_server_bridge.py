@@ -233,7 +233,7 @@ class CodexAppServerBridge:
             item = params.get("item", {})
             text = _extract_item_text(item)
             if item.get("type") in {"agent_message", "agentMessage"} and text:
-                self._dispatch({"type": "message_update", "delta": text})
+                self._dispatch({"type": "message_update", "delta": text, "completed": True})
             reasoning = _extract_reasoning_text(item)
             if reasoning:
                 self._dispatch({"type": "reasoning_update", "delta": reasoning})

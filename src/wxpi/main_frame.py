@@ -18,6 +18,14 @@ from wxpi.preferences import AppPreferences, ThreadOptions
 from wxpi.profile_dialog import ProfileDialog
 from wxpi.session_controller import SessionController
 from wxpi.settings_dialog import SettingsDialog
+from wxpi.slash_command_dialog import SlashCommandDialog
+from wxpi.slash_commands import (
+    SLASH_COMMANDS,
+    SlashCommand,
+    parse_slash_command,
+    unescape_literal_slash,
+)
+from wxpi.transcript import format_turn_details_with_status
 from wxpi.working_status import format_working_status
 from wxpi.worktrees import create_worktree
 
@@ -106,12 +114,17 @@ class MainFrame(wx.Frame):
         menubar.Append(file_menu, "File")
         menubar.Append(edit_menu, "Edit")
         tools_menu = wx.Menu()
+        slash_commands_item = wx.MenuItem(tools_menu, wx.ID_ANY, "Slash Commands...\tCtrl+/")
         plugins_item = wx.MenuItem(tools_menu, wx.ID_ANY, "Codex Plugins...\tCtrl+Shift+P")
         mcp_servers_item = wx.MenuItem(tools_menu, wx.ID_ANY, "MCP Servers...\tCtrl+M")
+        self._id_slash_commands = slash_commands_item.GetId()
         self._id_plugins = plugins_item.GetId()
         self._id_mcp_servers = mcp_servers_item.GetId()
+        tools_menu.Append(slash_commands_item)
+        tools_menu.AppendSeparator()
         tools_menu.Append(plugins_item)
         tools_menu.Append(mcp_servers_item)
+        self.Bind(wx.EVT_MENU, self._on_slash_commands, slash_commands_item)
         self.Bind(wx.EVT_MENU, self._on_plugins, plugins_item)
         self.Bind(wx.EVT_MENU, self._on_mcp_servers, mcp_servers_item)
         menubar.Append(tools_menu, "Tools")
@@ -160,7 +173,13 @@ class MainFrame(wx.Frame):
         turn_status_label = wx.StaticText(main_panel, label="Turn status:")
         self._turn_status_text = wx.StaticText(main_panel, label=self._turn_status)
         turn_details_label = wx.StaticText(main_panel, label="Turn details:")
-        self._turn_details_text = wx.StaticText(main_panel, label=self._turn_details)
+        self._turn_details_text = wx.TextCtrl(
+            main_panel,
+            wx.ID_ANY,
+            value=self._turn_details,
+            style=wx.TE_READONLY,
+        )
+        self._turn_details_text.SetToolTip("Turn details")
         self._working_gauge = wx.Gauge(main_panel, range=100, size=(160, -1))
         self._working_gauge.SetValue(0)
         turn_status_sizer.Add(turn_status_label, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, border=4)
@@ -197,6 +216,8 @@ class MainFrame(wx.Frame):
         sizer.Add(self._input, proportion=2, flag=wx.EXPAND | wx.ALL, border=4)
 
         main_panel.SetSizer(sizer)
+        self._turn_details_text.MoveAfterInTabOrder(self._transcript)
+        self._input.MoveAfterInTabOrder(self._turn_details_text)
 
         # Give focus to input field
         self._input.SetFocus()
@@ -214,7 +235,9 @@ class MainFrame(wx.Frame):
         if hasattr(self, "_turn_status_text"):
             self._turn_status_text.SetLabel(self._turn_status)
         if hasattr(self, "_turn_details_text"):
-            self._turn_details_text.SetLabel(self._turn_details)
+            details = format_turn_details_with_status(self._turn_details, self._turn_status)
+            if self._turn_details_text.GetValue() != details:
+                self._turn_details_text.ChangeValue(details)
 
     def _update_title(self) -> None:
         """Update window title with working directory."""
@@ -233,6 +256,7 @@ class MainFrame(wx.Frame):
             (wx.ACCEL_CTRL, ord('N'), wx.ID_NEW),
             (wx.ACCEL_CTRL, ord('O'), wx.ID_OPEN),
             (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('O'), self._id_change_workspace),
+            (wx.ACCEL_CTRL, ord('/'), self._id_slash_commands),
             (wx.ACCEL_CTRL, ord('M'), self._id_mcp_servers),
             (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, ord('P'), self._id_plugins),
             (wx.ACCEL_CTRL, ord('Q'), wx.ID_EXIT),
@@ -243,16 +267,52 @@ class MainFrame(wx.Frame):
         # Bind the new IDs
         self.Bind(wx.EVT_MENU, self._on_change_workspace, id=self._id_change_workspace)
         self.Bind(wx.EVT_MENU, self._on_abort, id=self._id_abort)
+        self.Bind(wx.EVT_CHAR_HOOK, self._on_char_hook)
 
     # ------------------------------------------------------------------
     # Event handlers
     # ------------------------------------------------------------------
+
+    def _on_char_hook(self, event: wx.KeyEvent) -> None:
+        """Keep the metadata field in the keyboard route around multiline edits."""
+        if event.GetKeyCode() != wx.WXK_TAB or event.ControlDown() or event.AltDown():
+            event.Skip()
+            return
+
+        focused = wx.Window.FindFocus()
+        if focused == self._transcript and not event.ShiftDown():
+            self._turn_details_text.SetFocus()
+            return
+        if focused == self._turn_details_text:
+            if event.ShiftDown():
+                self._transcript.SetFocus()
+            else:
+                self._input.SetFocus()
+            return
+        if focused == self._input and event.ShiftDown():
+            self._turn_details_text.SetFocus()
+            return
+
+        event.Skip()
 
     def _on_submit_prompt(self, event: wx.CommandEvent) -> None:
         """Handle prompt submission."""
         text = self._input.GetValue().strip()
         if not text:
             return
+        if text.startswith("//"):
+            text = unescape_literal_slash(text)
+        elif text.startswith("/"):
+            match = parse_slash_command(text)
+            if not match:
+                self.set_turn_status("Unknown slash command")
+                return
+            if match.command.action == "codex":
+                pass
+            else:
+                self._input.Clear()
+                self._run_slash_command(match.command)
+                return
         if not self._session_controller.has_active_session():
             if self._pending_prompt:
                 self.set_turn_status("Still starting Codex")
@@ -347,12 +407,30 @@ class MainFrame(wx.Frame):
             self._input.Copy()
         elif self._transcript.HasFocus():
             self._transcript.Copy()
+        elif self._turn_details_text.HasFocus():
+            self._turn_details_text.Copy()
 
     def _on_manage_profiles(self, event: wx.CommandEvent) -> None:
         """Open profile management dialog."""
         dlg = ProfileDialog(self)
         dlg.ShowModal()
         dlg.Destroy()
+
+    def _on_slash_commands(self, event: wx.CommandEvent) -> None:
+        """Open the slash command palette."""
+        dlg = SlashCommandDialog(self, SLASH_COMMANDS)
+        try:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            command = dlg.get_selected_command()
+            if not command:
+                return
+            if dlg.should_insert():
+                self._insert_slash_command(command)
+                return
+            self._run_slash_command(command)
+        finally:
+            dlg.Destroy()
 
     def _on_mcp_servers(self, event: wx.CommandEvent) -> None:
         """Open MCP server management dialog."""
@@ -385,6 +463,45 @@ class MainFrame(wx.Frame):
             f"About {APP_NAME}",
             wx.OK | wx.ICON_INFORMATION,
         )
+
+    def _insert_slash_command(self, command: SlashCommand) -> None:
+        self._input.ChangeValue(command.name + " ")
+        self._input.SetInsertionPointEnd()
+        self._input.SetFocus()
+
+    def _run_slash_command(self, command: SlashCommand) -> None:
+        action = command.action
+        self.set_turn_status(f"Running {command.name}")
+        if action == "new_session":
+            self._on_new_session(wx.CommandEvent())
+        elif action == "change_workspace":
+            self._on_change_workspace(wx.CommandEvent())
+        elif action == "settings":
+            self._on_settings(wx.CommandEvent())
+        elif action == "profiles":
+            self._on_manage_profiles(wx.CommandEvent())
+        elif action == "plugins":
+            self._on_plugins(wx.CommandEvent())
+        elif action == "mcp_servers":
+            self._on_mcp_servers(wx.CommandEvent())
+        elif action == "slash_help":
+            self._show_slash_command_help()
+        elif action == "quit":
+            self.Close()
+        elif action == "codex":
+            self._insert_slash_command(command)
+            self.set_turn_status(f"Inserted {command.name}")
+        else:
+            self.set_turn_status(f"No handler for {command.name}")
+            return
+        if self._working_started_at is None:
+            self.set_turn_status("Idle")
+
+    def _show_slash_command_help(self) -> None:
+        lines = ["Available slash commands:"]
+        lines.extend(f"{command.name} - {command.summary}" for command in SLASH_COMMANDS)
+        wx.MessageBox("\n".join(lines), "Slash Commands", wx.OK | wx.ICON_INFORMATION, self)
+        self.set_turn_status("Idle")
 
     def _start_configured_session(self, cwd: str, options: ThreadOptions) -> None:
         """Start a local or worktree-backed Codex session."""

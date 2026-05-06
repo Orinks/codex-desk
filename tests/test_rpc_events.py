@@ -35,6 +35,15 @@ def test_parse_message_update():
     event = parse_event(raw)
     assert isinstance(event, MessageUpdateEvent)
     assert event.delta == "Hello world"
+    assert event.completed is False
+
+
+def test_parse_completed_message_update():
+    raw = {"type": "message_update", "delta": "Hello world", "completed": True}
+    event = parse_event(raw)
+    assert isinstance(event, MessageUpdateEvent)
+    assert event.delta == "Hello world"
+    assert event.completed is True
 
 
 def test_parse_turn_start():

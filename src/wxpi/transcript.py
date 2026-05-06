@@ -10,6 +10,11 @@ def format_turn_details(model: str, reasoning_effort: str, state: str = "Current
     return f"{state}: model {model}, reasoning effort {reasoning_effort}"
 
 
+def format_turn_details_with_status(details: str, status: str) -> str:
+    """Return turn metadata with current progress status for focusable UI surfaces."""
+    return f"Status: {status}; {details}"
+
+
 def format_user_prompt(text: str, preferences: TranscriptPreferences) -> str:
     """Return the transcript text appended when the user sends a prompt."""
     if preferences.speaker_labels == "role":

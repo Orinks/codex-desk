@@ -45,6 +45,7 @@ class SessionController:
         self._preferences = AppPreferences()
         self._thread_options = ThreadOptions()
         self._active_turn_options: ThreadOptions | None = None
+        self._last_message_was_completed = False
 
     def set_preferences(self, preferences: AppPreferences) -> None:
         """Apply transcript preferences for future bridge events."""
@@ -179,11 +180,14 @@ class SessionController:
 
     def _on_turn_start(self, event: TurnStartEvent) -> None:
         """Handle turn_start event."""
+        self._last_message_was_completed = False
         self._main_frame.append_transcript(format_assistant_prefix(self._preferences.transcript))
 
     def _on_turn_end(self, event: TurnEndEvent) -> None:
         """Handle turn_end event."""
-        self._main_frame.append_transcript("\n\n")
+        if not self._last_message_was_completed:
+            self._main_frame.append_transcript("\n\n")
+        self._last_message_was_completed = False
         if self._active_turn_options:
             self._main_frame.set_turn_details(
                 format_turn_details(
@@ -197,6 +201,11 @@ class SessionController:
 
     def _on_message_update(self, event: MessageUpdateEvent) -> None:
         """Handle message_update event (streaming text)."""
+        if event.completed:
+            self._main_frame.append_transcript(f"{event.delta.rstrip()}\n\n")
+            self._last_message_was_completed = True
+            return
+        self._last_message_was_completed = False
         self._main_frame.append_transcript(event.delta)
 
     def _on_reasoning_update(self, event: ReasoningUpdateEvent) -> None:

@@ -5,6 +5,7 @@ from wxpi.transcript import (
     format_assistant_prefix,
     format_file_summary,
     format_turn_details,
+    format_turn_details_with_status,
     format_user_prompt,
     should_show_event,
 )
@@ -26,6 +27,15 @@ def test_format_turn_details_reports_model_and_effort():
     assert (
         format_turn_details("gpt-5.5", "low", state="Last turn")
         == "Last turn: model gpt-5.5, reasoning effort low"
+    )
+
+
+def test_format_turn_details_with_status_reports_progress_and_metadata():
+    details = format_turn_details("gpt-5.5", "low", state="Last turn")
+
+    assert (
+        format_turn_details_with_status(details, "Working for 12 seconds")
+        == "Status: Working for 12 seconds; Last turn: model gpt-5.5, reasoning effort low"
     )
 
 

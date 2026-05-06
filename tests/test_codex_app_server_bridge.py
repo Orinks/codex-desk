@@ -48,6 +48,7 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
         "turn_end",
     ]
     assert events[2]["delta"] == "Hello from Codex"
+    assert events[2]["completed"] is True
 
     messages = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
     assert [message["method"] for message in messages] == [

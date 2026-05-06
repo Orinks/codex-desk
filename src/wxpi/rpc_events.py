@@ -20,6 +20,7 @@ class AgentStartEvent:
 class MessageUpdateEvent:
     type: str = "message_update"
     delta: str = ""
+    completed: bool = False
 
 
 @dataclass
