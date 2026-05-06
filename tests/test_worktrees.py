@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from wxpi.worktrees import create_worktree, current_branch, list_branches
+from codex_desk.worktrees import create_worktree, current_branch, list_branches
 
 
 def _git(repo: str, *args: str) -> None:

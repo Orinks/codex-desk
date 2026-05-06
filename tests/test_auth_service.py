@@ -1,6 +1,6 @@
 """Tests for the Pi auth service.
 
-Written FIRST (TDD) — implementation in wxpi/auth_service.py must make these green.
+Written FIRST (TDD) — implementation in codex_desk/auth_service.py must make these green.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from wxpi.auth_service import AuthService
+from codex_desk.auth_service import AuthService
 
 
 class BlockingProcess:

@@ -1,10 +1,10 @@
-"""Settings dialog for global wxAgent preferences."""
+"""Settings dialog for global Codex Desk preferences."""
 
 from __future__ import annotations
 
 import wx
 
-from wxpi.preferences import (
+from codex_desk.preferences import (
     AppPreferences,
     PERSONALITIES,
     SPEAKER_LABEL_MODES,

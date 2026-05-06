@@ -1,4 +1,4 @@
-"""Codex app-server bridge for wxAgent.
+"""Codex app-server bridge for Codex Desk.
 
 This module owns the local ``codex app-server`` subprocess and speaks the
 JSON-RPC-over-JSONL protocol documented by OpenAI. It normalizes the small set
@@ -14,8 +14,8 @@ import sys
 import threading
 from typing import Callable
 
-from wxpi.constants import CODEX_BINARY
-from wxpi.preferences import AppPreferences, ThreadOptions
+from codex_desk.constants import CODEX_BINARY
+from codex_desk.preferences import AppPreferences, ThreadOptions
 
 CODEX_APP_SERVER_ARGS: list[str] = [
     CODEX_BINARY,
@@ -47,7 +47,7 @@ BENIGN_CODEX_WARNING_HINTS = (
 class CodexAppServerBridge:
     """Manage a local Codex app-server process over JSONL."""
 
-    def __init__(self, client_name: str = "wxagent", model: str = "gpt-5.4") -> None:
+    def __init__(self, client_name: str = "codex-desk", model: str = "gpt-5.4") -> None:
         self._client_name = client_name
         self._model = model
         self._proc: subprocess.Popen[str] | None = None
@@ -72,7 +72,7 @@ class CodexAppServerBridge:
     ) -> None:
         """Start Codex app-server and open a thread for the selected workspace."""
         if session_path or continue_session:
-            raise NotImplementedError("Codex thread resume is not wired into wxAgent yet")
+            raise NotImplementedError("Codex thread resume is not wired into Codex Desk yet")
         self._preferences = preferences or AppPreferences()
         self._thread_options = thread_options or ThreadOptions(model=self._model)
         self._model = self._thread_options.model
@@ -105,7 +105,7 @@ class CodexAppServerBridge:
             {
                 "clientInfo": {
                     "name": self._client_name,
-                    "title": "wxAgent",
+                    "title": "Codex Desk",
                     "version": "0.1.0",
                 }
             },

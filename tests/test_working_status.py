@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from wxpi.working_status import format_working_status
+from codex_desk.working_status import format_working_status
 
 
 def test_working_status_reports_seconds():

@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import wx
 
-from wxpi.codex_models import (
+from codex_desk.codex_models import (
     default_reasoning_effort_for_model,
     load_model_choices,
     reasoning_efforts_for_model,
 )
-from wxpi.preferences import (
+from codex_desk.preferences import (
     APPROVAL_POLICIES,
     APPROVAL_REVIEWERS,
     SANDBOX_MODES,
     THREAD_MODES,
     ThreadOptions,
 )
-from wxpi.worktrees import current_branch, list_branches
+from codex_desk.worktrees import current_branch, list_branches
 
 
 class NewSessionDialog(wx.Dialog):

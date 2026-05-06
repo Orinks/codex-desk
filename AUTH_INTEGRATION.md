@@ -1,4 +1,4 @@
-# wxPi Auth Integration Note
+# Codex Desk Auth Integration Note
 
 Status: research note based on the installed Pi package `@mariozechner/pi-coding-agent@0.61.0`
 
@@ -15,7 +15,7 @@ In this installed build:
 - A plain `pi --mode rpc --no-session` process exits immediately when no models are
   available, which happens on a clean machine with no auth and no API keys
 
-That means wxPi should not assume it can boot an unauthenticated RPC session and then
+That means Codex Desk should not assume it can boot an unauthenticated RPC session and then
 ask Pi to log in inside that same process.
 
 ## Recommendation
@@ -34,7 +34,7 @@ Use a dedicated auth bootstrap path above `PiBridge`.
 - Do not rely on a nonexistent `pi login` command.
 - Do not treat `/login` as a stable RPC command path.
 - Do not block the UI thread waiting for browser auth.
-- Do not store provider credentials in wxPi-owned config.
+- Do not store provider credentials in Codex Desk-owned config.
 
 ## Minimal Seam To Add Later
 

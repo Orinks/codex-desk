@@ -1,10 +1,10 @@
-"""Profile selection dialog for optional wxAgent capability packs."""
+"""Profile selection dialog for optional Codex Desk capability packs."""
 
 from __future__ import annotations
 
 import wx
 
-from wxpi.profiles import AgentProfile, list_profiles
+from codex_desk.profiles import AgentProfile, list_profiles
 
 
 class ProfileDialog(wx.Dialog):

@@ -250,7 +250,7 @@ SLASH_COMMANDS: tuple[SlashCommand, ...] = (
     ),
     SlashCommand(
         name="/settings",
-        summary="Open wxAgent settings.",
+        summary="Open Codex Desk settings.",
         usage="/settings",
         action="settings",
     ),
@@ -287,7 +287,7 @@ SLASH_COMMANDS: tuple[SlashCommand, ...] = (
     ),
     SlashCommand(
         name="/help",
-        summary="Show available wxAgent slash commands.",
+        summary="Show available Codex Desk slash commands.",
         usage="/help",
         action="slash_help",
     ),

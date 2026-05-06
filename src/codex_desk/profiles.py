@@ -1,4 +1,4 @@
-"""Installable capability profiles for wxAgent."""
+"""Installable capability profiles for Codex Desk."""
 
 from __future__ import annotations
 

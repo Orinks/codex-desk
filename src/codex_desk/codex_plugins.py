@@ -6,7 +6,7 @@ import subprocess
 import sys
 from collections.abc import Callable, Sequence
 
-from wxpi.constants import CODEX_BINARY
+from codex_desk.constants import CODEX_BINARY
 
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]

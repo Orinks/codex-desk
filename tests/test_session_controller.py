@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from wxpi.rpc_events import MessageUpdateEvent, TurnEndEvent, TurnStartEvent
-from wxpi.session_controller import SessionController
+from codex_desk.rpc_events import MessageUpdateEvent, TurnEndEvent, TurnStartEvent
+from codex_desk.session_controller import SessionController
 
 
 class FakeMainFrame:

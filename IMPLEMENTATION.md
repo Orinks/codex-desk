@@ -1,8 +1,8 @@
-# wxAgent Implementation Notes
+# Codex Desk Implementation Notes
 
 ## What Exists
 
-wxAgent currently has two backend layers:
+Codex Desk currently has two backend layers:
 
 - `CodexAppServerBridge`: active MVP bridge for `codex app-server`.
 - `PiBridge`: legacy scaffold bridge retained temporarily with tests so we do not lose known-good

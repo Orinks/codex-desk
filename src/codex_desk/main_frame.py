@@ -1,33 +1,33 @@
-"""Main window frame for wxAgent."""
+"""Main window frame for Codex Desk."""
 from dataclasses import replace
 import os
 import threading
 import time
 import wx
 
-from wxpi.codex_models import (
+from codex_desk.codex_models import (
     default_reasoning_effort_for_model,
     load_model_choices,
     reasoning_efforts_for_model,
 )
-from wxpi.constants import APP_NAME
-from wxpi.mcp_manager_dialog import McpManagerDialog
-from wxpi.new_session_dialog import NewSessionDialog
-from wxpi.plugin_manager_dialog import PluginManagerDialog
-from wxpi.preferences import AppPreferences, ThreadOptions
-from wxpi.profile_dialog import ProfileDialog
-from wxpi.session_controller import SessionController
-from wxpi.settings_dialog import SettingsDialog
-from wxpi.slash_command_dialog import SlashCommandDialog
-from wxpi.slash_commands import (
+from codex_desk.constants import APP_NAME
+from codex_desk.mcp_manager_dialog import McpManagerDialog
+from codex_desk.new_session_dialog import NewSessionDialog
+from codex_desk.plugin_manager_dialog import PluginManagerDialog
+from codex_desk.preferences import AppPreferences, ThreadOptions
+from codex_desk.profile_dialog import ProfileDialog
+from codex_desk.session_controller import SessionController
+from codex_desk.settings_dialog import SettingsDialog
+from codex_desk.slash_command_dialog import SlashCommandDialog
+from codex_desk.slash_commands import (
     SLASH_COMMANDS,
     SlashCommand,
     parse_slash_command,
     unescape_literal_slash,
 )
-from wxpi.transcript import format_turn_details_with_status
-from wxpi.working_status import format_working_status
-from wxpi.worktrees import create_worktree
+from codex_desk.transcript import format_turn_details_with_status
+from codex_desk.working_status import format_working_status
+from codex_desk.worktrees import create_worktree
 
 
 class MainFrame(wx.Frame):
@@ -325,7 +325,7 @@ class MainFrame(wx.Frame):
                 target=self._start_default_session_and_send_prompt,
                 args=(text,),
                 daemon=True,
-                name="wxagent-session-start",
+                name="codex-desk-session-start",
             ).start()
             return
         self._session_controller.send_prompt(text)

@@ -1,11 +1,11 @@
-# wxPi Windows Packaging Specification
-# PyInstaller spec file for building wxPi as a single executable
+# Codex Desk Windows Packaging Specification
+# PyInstaller spec file for building Codex Desk as a single executable
 #
 # To build:
 #   cd build/windows
-#   pyinstaller wxpi.spec
+#   pyinstaller codex-desk.spec
 #
-# Output will be in build/windows/dist/wxPi/
+# Output will be in build/windows/dist/Codex Desk/
 
 import sys
 from pathlib import Path
@@ -16,7 +16,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 block_cipher = None
 
 a = Analysis(
-    [str(PROJECT_ROOT / 'wxpi' / 'app.py')],
+    [str(PROJECT_ROOT / 'src' / 'codex_desk' / 'app.py')],
     pathex=[str(PROJECT_ROOT)],
     binaries=[],
     datas=[
@@ -61,7 +61,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='wxPi',
+    name='Codex Desk',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

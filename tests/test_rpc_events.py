@@ -1,13 +1,13 @@
 """
 Tests for rpc_events.parse_event().
-Written FIRST (TDD) — implementation in wxpi/rpc_events.py must make these green.
+Written FIRST (TDD) — implementation in codex_desk/rpc_events.py must make these green.
 """
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from wxpi.rpc_events import (
+from codex_desk.rpc_events import (
     parse_event,
     AgentStartEvent,
     MessageUpdateEvent,

@@ -1,8 +1,8 @@
-# wxAgent
+# Codex Desk
 
 Native, screen-reader-first desktop control plane for the OpenAI Codex CLI.
 
-wxAgent is a wxPython app that gives Codex a native accessible frontend: a transcript, prompt
+Codex Desk is a wxPython app that gives Codex a native accessible frontend: a transcript, prompt
 input, workspace controls, status updates, approval dialogs, and optional capability profiles.
 The default profile is intentionally vanilla Codex. Extra workflow packs such as Oh My Codex,
 Obra, and Compound Engineering are modeled as opt-in profiles.
@@ -36,7 +36,7 @@ Implemented:
 Still early:
 
 - Codex resume/thread listing is not wired yet.
-- Cloud task execution is not exposed; wxAgent currently starts local Codex app-server threads only.
+- Cloud task execution is not exposed; Codex Desk currently starts local Codex app-server threads only.
 - Tool approval mapping uses the app's internal normalized event contract and needs live Codex
   protocol hardening.
 - NVDA/manual accessibility testing still needs a documented pass.
@@ -60,15 +60,14 @@ codex
 ```powershell
 uv sync
 uv run pytest
-uv run wxagent
+uv run codex-desk
 ```
 
-The package is still named `wxpi` internally from the original scaffold. Product-facing naming is
-now `wxAgent`; a later cleanup can rename the Python package once the Codex bridge has settled.
+The Python package is `codex_desk`.
 
 ## Architecture
 
-wxAgent talks to Codex through `codex app-server`, which exposes JSON-RPC messages over JSONL
+Codex Desk talks to Codex through `codex app-server`, which exposes JSON-RPC messages over JSONL
 stdio. The bridge normalizes Codex app-server messages into a small UI event contract:
 
 - `agent_start`
@@ -82,14 +81,14 @@ stdio. The bridge normalizes Codex app-server messages into a small UI event con
 - tool execution start/end events
 
 The wx UI only consumes this normalized contract, keeping Codex protocol details isolated in
-`src/wxpi/codex_app_server_bridge.py`.
+`src/codex_desk/codex_app_server_bridge.py`.
 
-wxAgent launches app-server with `analytics.enabled=false` so it does not inherit analytics
+Codex Desk launches app-server with `analytics.enabled=false` so it does not inherit analytics
 opt-ins from a user's main Codex profile. Known plugin marketplace and analytics `403` warnings
 from Codex stderr are treated as debug diagnostics because they do not block app-server auth,
 thread startup, or model execution. Unexpected stderr remains visible as a Codex warning.
 
-On the first prompt for a workspace, wxAgent may need to start `codex app-server` and open a Codex
+On the first prompt for a workspace, Codex Desk may need to start `codex app-server` and open a Codex
 thread before the turn can run. That startup happens off the UI thread, and a labeled turn-status
 row plus the status bar report `Working for X seconds` immediately so the user gets the same kind
 of feedback the Codex desktop app gives while backend work is warming up. The transcript remains
@@ -106,7 +105,7 @@ The main window and session dialogs use visible labels before edit boxes and com
 reader compatibility. Accessibility verification steps live in
 `docs/accessibility-test-plan.md`.
 
-MCP servers are managed from `Tools -> MCP Servers`. wxAgent shells out to the Codex CLI for the
+MCP servers are managed from `Tools -> MCP Servers`. Codex Desk shells out to the Codex CLI for the
 supported lifecycle commands rather than editing MCP entries by hand.
 
 Codex plugins are managed from `Tools -> Codex Plugins`. Marketplace lifecycle operations use

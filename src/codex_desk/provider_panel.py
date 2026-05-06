@@ -423,7 +423,7 @@ class ProviderPanel(wx.Panel):
                 
                 wx.MessageBox(
                     f"API key for {provider['name']} has been saved.\n\n"
-                    f"Note: You may need to restart wxPi for the key to take effect.",
+                    f"Note: You may need to restart Codex Desk for the key to take effect.",
                     "API Key Saved",
                     wx.OK | wx.ICON_INFORMATION,
                     self,

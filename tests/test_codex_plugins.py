@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from wxpi.codex_plugins import CodexPluginService
+from codex_desk.codex_plugins import CodexPluginService
 
 
 class RecordingRunner:

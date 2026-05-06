@@ -1,6 +1,6 @@
 """
 Tests for PiBridge.
-Written FIRST (TDD) — implementation in wxpi/rpc_bridge.py must make these green.
+Written FIRST (TDD) — implementation in codex_desk/rpc_bridge.py must make these green.
 
 fake_pi.py and its variants are deterministic subprocess stand-ins (no live Pi required).
 """
@@ -11,7 +11,7 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from wxpi.rpc_bridge import PiBridge
+from codex_desk.rpc_bridge import PiBridge
 
 FAKE_PI = [sys.executable, os.path.join(os.path.dirname(__file__), "fake_pi.py")]
 FAKE_PI_ABORT = [sys.executable, os.path.join(os.path.dirname(__file__), "fake_pi_abort.py")]
@@ -23,7 +23,7 @@ def test_happy_path(monkeypatch):
     """Bridge receives all expected event types from fake_pi on a simple prompt."""
     events = []
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
     bridge.on_event(events.append)
     bridge.start(cwd="/tmp")
     bridge.send_prompt("hello")
@@ -39,7 +39,7 @@ def test_message_update_deltas(monkeypatch):
     """All delta values from fake_pi are received in order."""
     events = []
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
     bridge.on_event(events.append)
     bridge.start(cwd="/tmp")
     bridge.send_prompt("hello")
@@ -53,7 +53,7 @@ def test_exit_callback_fires(monkeypatch):
     """on_process_exit callback is called after fake_pi terminates."""
     exit_called = threading.Event()
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
     bridge.on_process_exit(lambda: exit_called.set())
     bridge.start(cwd="/tmp")
     bridge.send_prompt("hello")
@@ -65,7 +65,7 @@ def test_multiple_event_callbacks(monkeypatch):
     received_a = []
     received_b = []
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
     bridge.on_event(received_a.append)
     bridge.on_event(received_b.append)
     bridge.start(cwd="/tmp")
@@ -80,7 +80,7 @@ def test_no_events_before_prompt(monkeypatch):
     """Bridge starts but emits nothing until a prompt is sent."""
     events = []
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI)
     bridge.on_event(events.append)
     bridge.start(cwd="/tmp")
     time.sleep(0.15)
@@ -92,7 +92,7 @@ def test_send_abort_round_trip(monkeypatch):
     events = []
     exit_called = threading.Event()
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_ABORT)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_ABORT)
     bridge.on_event(events.append)
     bridge.on_process_exit(lambda: exit_called.set())
     bridge.start(cwd="/tmp")
@@ -109,7 +109,7 @@ def test_confirm_round_trip(monkeypatch):
     events = []
     exit_called = threading.Event()
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_CONFIRM)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_CONFIRM)
     bridge.on_event(events.append)
     bridge.on_process_exit(lambda: exit_called.set())
     bridge.start(cwd="/tmp")
@@ -135,7 +135,7 @@ def test_unicode_separators_survive_jsonl_round_trip(monkeypatch):
     events = []
     exit_called = threading.Event()
     bridge = PiBridge()
-    monkeypatch.setattr("wxpi.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_UNICODE)
+    monkeypatch.setattr("codex_desk.rpc_bridge.PI_BINARY_ARGS", FAKE_PI_UNICODE)
     bridge.on_event(events.append)
     bridge.on_process_exit(lambda: exit_called.set())
     bridge.start(cwd="/tmp")

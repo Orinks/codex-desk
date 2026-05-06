@@ -6,8 +6,8 @@ import subprocess
 
 import wx
 
-from wxpi.codex_config import CodexConfigService, CodexMarketplace, CodexPlugin
-from wxpi.codex_plugins import CodexPluginService
+from codex_desk.codex_config import CodexConfigService, CodexMarketplace, CodexPlugin
+from codex_desk.codex_plugins import CodexPluginService
 
 
 class PluginManagerDialog(wx.Dialog):

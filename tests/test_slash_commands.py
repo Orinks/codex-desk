@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from wxpi.slash_commands import (
+from codex_desk.slash_commands import (
     SLASH_COMMANDS,
     filter_slash_commands,
     parse_slash_command,

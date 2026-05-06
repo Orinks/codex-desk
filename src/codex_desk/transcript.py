@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from wxpi.preferences import TranscriptPreferences
+from codex_desk.preferences import TranscriptPreferences
 
 
 def format_turn_details(model: str, reasoning_effort: str, state: str = "Current turn") -> str:

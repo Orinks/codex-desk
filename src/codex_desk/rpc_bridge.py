@@ -10,7 +10,7 @@ import sys
 import threading
 from typing import Callable, Optional
 
-from wxpi.constants import PI_BINARY
+from codex_desk.constants import PI_BINARY
 
 # Monkeypatched in tests to point at tests/fake_pi.py
 PI_BINARY_ARGS: list[str] = [PI_BINARY, "--mode", "rpc"]

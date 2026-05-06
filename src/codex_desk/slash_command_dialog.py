@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import wx
 
-from wxpi.slash_commands import SlashCommand, filter_slash_commands
+from codex_desk.slash_commands import SlashCommand, filter_slash_commands
 
 
 class SlashCommandDialog(wx.Dialog):
-    """Native command palette for wxAgent slash commands."""
+    """Native command palette for Codex Desk slash commands."""
 
     def __init__(self, parent: wx.Window, commands: tuple[SlashCommand, ...]) -> None:
         super().__init__(

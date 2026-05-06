@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from wxpi.profiles import default_profile, get_profile, list_profiles
+from codex_desk.profiles import default_profile, get_profile, list_profiles
 
 
 def test_default_profile_is_vanilla_codex():

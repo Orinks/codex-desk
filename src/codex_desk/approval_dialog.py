@@ -3,7 +3,7 @@ import json
 
 import wx
 
-from wxpi.rpc_events import ConfirmEvent
+from codex_desk.rpc_events import ConfirmEvent
 
 
 class ToolApprovalDialog(wx.Dialog):

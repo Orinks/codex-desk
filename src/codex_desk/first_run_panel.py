@@ -6,7 +6,7 @@ import threading
 
 import wx
 
-from wxpi.constants import APP_NAME, CODEX_BINARY
+from codex_desk.constants import APP_NAME, CODEX_BINARY
 
 # Use shell=True on Windows since npm is a .cmd batch file.
 USE_SHELL = sys.platform == "win32"

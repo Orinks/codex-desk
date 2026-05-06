@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from wxpi.preferences import AppPreferences, ThreadOptions, TranscriptPreferences
+from codex_desk.preferences import AppPreferences, ThreadOptions, TranscriptPreferences
 
 
 def test_default_preferences_keep_transcript_minimal():

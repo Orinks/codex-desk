@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from wxpi.preferences import TranscriptPreferences
-from wxpi.transcript import (
+from codex_desk.preferences import TranscriptPreferences
+from codex_desk.transcript import (
     format_assistant_prefix,
     format_file_summary,
     format_turn_details,

@@ -4,10 +4,10 @@ from typing import Optional
 
 import wx
 
-from wxpi.approval_dialog import ToolApprovalDialog
-from wxpi.codex_app_server_bridge import CodexAppServerBridge
-from wxpi.preferences import AppPreferences, ThreadOptions
-from wxpi.rpc_events import (
+from codex_desk.approval_dialog import ToolApprovalDialog
+from codex_desk.codex_app_server_bridge import CodexAppServerBridge
+from codex_desk.preferences import AppPreferences, ThreadOptions
+from codex_desk.rpc_events import (
     AgentEndEvent,
     AgentStartEvent,
     ConfirmEvent,
@@ -21,7 +21,7 @@ from wxpi.rpc_events import (
     TurnEndEvent,
     TurnStartEvent,
 )
-from wxpi.transcript import (
+from codex_desk.transcript import (
     format_assistant_prefix,
     format_file_summary,
     format_turn_details,

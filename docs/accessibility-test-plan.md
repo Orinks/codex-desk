@@ -1,4 +1,4 @@
-# wxAgent Accessibility Test Plan
+# Codex Desk Accessibility Test Plan
 
 ## Main Window
 

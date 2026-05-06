@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from wxpi.codex_models import (
+from codex_desk.codex_models import (
     DEFAULT_MODEL_CHOICES,
     default_reasoning_effort_for_model,
     load_model_choices,

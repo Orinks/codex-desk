@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from wxpi.codex_config import CodexConfigService
+from codex_desk.codex_config import CodexConfigService
 
 
 def test_lists_codex_marketplaces_and_plugins(tmp_path):

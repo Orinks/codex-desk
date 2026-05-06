@@ -9,7 +9,7 @@ Acceptance:
 - Prints a successful get_state response from the live Pi binary.
 - Prints prompt acceptance plus streamed events until agent_end.
 - U+2028 / U+2029 in a prompt payload do not corrupt the JSONL reader.
-- No wx, no wxpi package — standalone throwaway script.
+- No wx, no codex_desk package — standalone throwaway script.
 """
 import json
 import subprocess

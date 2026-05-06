@@ -1,4 +1,4 @@
-# wxAgent Implementation Plan
+# Codex Desk Implementation Plan
 
 **Status:** Active MVP  
 **Package manager:** UV  
@@ -17,7 +17,7 @@
 
 Implemented:
 
-- `src/wxpi/codex_app_server_bridge.py`
+- `src/codex_desk/codex_app_server_bridge.py`
 - `tests/fake_codex_app_server.py`
 - `tests/test_codex_app_server_bridge.py`
 
@@ -39,10 +39,10 @@ Next:
 
 Implemented:
 
-- `src/wxpi/app.py`
-- `src/wxpi/main_frame.py`
-- `src/wxpi/session_controller.py`
-- `src/wxpi/approval_dialog.py`
+- `src/codex_desk/app.py`
+- `src/codex_desk/main_frame.py`
+- `src/codex_desk/session_controller.py`
+- `src/codex_desk/approval_dialog.py`
 
 Next:
 
@@ -54,8 +54,8 @@ Next:
 
 Implemented:
 
-- `src/wxpi/profiles.py`
-- `src/wxpi/profile_dialog.py`
+- `src/codex_desk/profiles.py`
+- `src/codex_desk/profile_dialog.py`
 - `tests/test_profiles.py`
 
 Profiles:

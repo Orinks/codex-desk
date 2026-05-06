@@ -1,12 +1,12 @@
-# wxAgent Architecture
+# Codex Desk Architecture
 
 ## Overview
 
-wxAgent is a native wxPython desktop app that wraps the local OpenAI Codex CLI/app-server. The app
+Codex Desk is a native wxPython desktop app that wraps the local OpenAI Codex CLI/app-server. The app
 is designed for screen reader and keyboard users first.
 
 ```text
-wxAgent wxPython UI
+Codex Desk wxPython UI
   -> SessionController
   -> CodexAppServerBridge
   -> codex app-server
@@ -21,7 +21,7 @@ The bridge starts:
 codex app-server
 ```
 
-Codex app-server speaks JSON-RPC messages over newline-delimited JSON on stdio. wxAgent sends:
+Codex app-server speaks JSON-RPC messages over newline-delimited JSON on stdio. Codex Desk sends:
 
 - `initialize`
 - `initialized`
@@ -68,7 +68,7 @@ making the composer busy.
 
 ## Accessibility
 
-wxAgent follows wxPython's screen reader pattern: visible `wx.StaticText` labels are placed
+Codex Desk follows wxPython's screen reader pattern: visible `wx.StaticText` labels are placed
 immediately before text inputs, combo boxes, choices, and read-only transcript fields. The main
 window keeps model and reasoning controls outside the composer so the prompt edit box remains
 focused on message entry.
@@ -81,7 +81,7 @@ Git repository.
 
 ## MCP Servers
 
-wxAgent delegates MCP lifecycle operations to the Codex CLI:
+Codex Desk delegates MCP lifecycle operations to the Codex CLI:
 
 - `codex mcp list`
 - `codex mcp add`
@@ -89,12 +89,12 @@ wxAgent delegates MCP lifecycle operations to the Codex CLI:
 - `codex mcp login`
 - `codex mcp logout`
 
-This keeps wxAgent aligned with Codex auth and config behavior while still giving screen reader
+This keeps Codex Desk aligned with Codex auth and config behavior while still giving screen reader
 users a native control surface.
 
 ## Plugins
 
-wxAgent reads configured plugin marketplaces and plugin enabled state from `~/.codex/config.toml`.
+Codex Desk reads configured plugin marketplaces and plugin enabled state from `~/.codex/config.toml`.
 Marketplace add, upgrade, and remove operations delegate to:
 
 - `codex plugin marketplace add`

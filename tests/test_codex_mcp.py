@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from wxpi.codex_mcp import CodexMcpService, McpServer
+from codex_desk.codex_mcp import CodexMcpService, McpServer
 
 
 class RecordingRunner:

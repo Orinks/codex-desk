@@ -31,7 +31,7 @@ FALLBACK_REASONING_EFFORTS = ("low", "medium", "high", "xhigh")
 
 @dataclass(frozen=True)
 class CodexModelInfo:
-    """Locally cached Codex model metadata needed by wxAgent controls."""
+    """Locally cached Codex model metadata needed by Codex Desk controls."""
 
     slug: str
     reasoning_efforts: tuple[str, ...] = FALLBACK_REASONING_EFFORTS

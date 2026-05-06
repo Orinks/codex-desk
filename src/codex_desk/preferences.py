@@ -1,4 +1,4 @@
-"""User preferences for wxAgent sessions and transcript rendering."""
+"""User preferences for Codex Desk sessions and transcript rendering."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class TranscriptPreferences:
 
 @dataclass(frozen=True)
 class AppPreferences:
-    """Settings shared by new wxAgent threads."""
+    """Settings shared by new Codex Desk threads."""
 
     personality: str = "none"
     transcript: TranscriptPreferences = TranscriptPreferences()

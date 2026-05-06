@@ -5,13 +5,13 @@ import sys
 import threading
 from pathlib import Path
 
-from wxpi.codex_app_server_bridge import (
+from codex_desk.codex_app_server_bridge import (
     CODEX_APP_SERVER_ARGS,
     CodexAppServerBridge,
     _classify_stderr_line,
     _summarize_file_changes,
 )
-from wxpi.preferences import AppPreferences, ThreadOptions
+from codex_desk.preferences import AppPreferences, ThreadOptions
 
 
 FAKE_CODEX = [sys.executable, str(Path(__file__).with_name("fake_codex_app_server.py"))]
@@ -22,9 +22,9 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
     exit_called = threading.Event()
     log_path = tmp_path / "client_messages.jsonl"
     monkeypatch.setenv("WXAGENT_FAKE_CODEX_LOG", str(log_path))
-    monkeypatch.setattr("wxpi.codex_app_server_bridge.CODEX_APP_SERVER_ARGS", FAKE_CODEX)
+    monkeypatch.setattr("codex_desk.codex_app_server_bridge.CODEX_APP_SERVER_ARGS", FAKE_CODEX)
 
-    bridge = CodexAppServerBridge(client_name="wxagent-test", model="gpt-5.4")
+    bridge = CodexAppServerBridge(client_name="codex-desk-test", model="gpt-5.4")
     bridge.on_event(events.append)
     bridge.on_process_exit(exit_called.set)
 
@@ -57,7 +57,7 @@ def test_bridge_handshakes_starts_thread_and_runs_turn(monkeypatch, tmp_path):
         "thread/start",
         "turn/start",
     ]
-    assert messages[0]["params"]["clientInfo"]["name"] == "wxagent-test"
+    assert messages[0]["params"]["clientInfo"]["name"] == "codex-desk-test"
     assert messages[2]["params"] == {
         "cwd": str(tmp_path),
         "model": "gpt-5.5",

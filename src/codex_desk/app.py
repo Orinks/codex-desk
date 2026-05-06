@@ -1,12 +1,12 @@
-"""wxAgent application entry point."""
+"""Codex Desk application entry point."""
 import shutil
 import sys
 
 import wx
 
-from wxpi.constants import APP_NAME, CODEX_BINARY
-from wxpi.first_run_panel import FirstRunFrame
-from wxpi.main_frame import MainFrame
+from codex_desk.constants import APP_NAME, CODEX_BINARY
+from codex_desk.first_run_panel import FirstRunFrame
+from codex_desk.main_frame import MainFrame
 
 
 def check_codex_available() -> bool:
@@ -14,13 +14,13 @@ def check_codex_available() -> bool:
     return shutil.which(CODEX_BINARY) is not None
 
 
-class WxPiApp(wx.App):
-    """wxPi application class."""
+class CodexDeskApp(wx.App):
+    """Codex Desk application class."""
 
     def OnInit(self) -> bool:
         """Initialize the application."""
         self.SetAppName(APP_NAME)
-        self.SetVendorName("wxPi")
+        self.SetVendorName("Codex Desk")
 
         # Check if Codex is available on PATH.
         if not check_codex_available():
@@ -53,7 +53,7 @@ class WxPiApp(wx.App):
 
 def main() -> int:
     """Application entry point."""
-    app = WxPiApp(False)
+    app = CodexDeskApp(False)
     return app.MainLoop()
 
 

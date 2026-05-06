@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal, Protocol
 
-from wxpi.constants import PI_BINARY
+from codex_desk.constants import PI_BINARY
 
 
 DEFAULT_AUTH_PATH = Path.home() / ".pi" / "agent" / "auth.json"
@@ -35,7 +35,7 @@ LoginResultStatus = Literal["success", "failed", "cancelled"]
 
 @dataclass(frozen=True)
 class AuthState:
-    """Current Pi auth availability as seen by wxPi."""
+    """Current Pi auth availability as seen by Codex Desk."""
 
     status: AuthStateStatus
     pi_installed: bool
