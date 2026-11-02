@@ -1,8 +1,8 @@
 # Codex Desk
 
-Native, screen-reader-first desktop control plane for the OpenAI Codex CLI.
+Native desktop app for running and controlling OpenAI Codex CLI sessions.
 
-Codex Desk is a wxPython app that gives Codex a native accessible frontend: a transcript, prompt
+Codex Desk is a wxPython app that gives Codex a native frontend: a transcript, prompt
 input, workspace controls, status updates, approval dialogs, and optional capability profiles.
 The default profile is intentionally vanilla Codex. Extra workflow packs such as Oh My Codex,
 Obra, and Compound Engineering are modeled as opt-in profiles.
